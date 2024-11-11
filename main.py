@@ -42,8 +42,6 @@ if __name__ == "__main__":
 
     config_folder = args.config_folder
     config = get_config(config_folder)
-    print(config) 
-    raise
 
     set_random_seed(config['random_seed'])
     mode = config['mode']
