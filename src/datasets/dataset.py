@@ -86,10 +86,7 @@ class XRayDataset(Dataset):
                     # skip i > 0
                     break
             
-            self.filenames = filenames
             self.labelnames = labelnames
-            self.is_train = mode
-            self.transforms = transforms
             
         elif mode == 'test':
             self.image_root = image_root
@@ -98,6 +95,7 @@ class XRayDataset(Dataset):
 
         self.filenames = filenames
         self.transforms = transforms
+        self.mode = mode
     
     def __len__(self):
         return len(self.filenames)
@@ -134,11 +132,11 @@ class XRayDataset(Dataset):
                 label[..., class_ind] = class_label
             
             if self.transforms is not None:
-                inputs = {"image": image, "mask": label} if self.is_train else {"image": image}
+                inputs = {"image": image, "mask": label} if self.mode == 'train' else {"image": image}
                 result = self.transforms(**inputs)
                 
                 image = result["image"]
-                label = result["mask"] if self.is_train else label
+                label = result["mask"] if self.mode == 'train' else label
 
             # to tenser will be done later
             image = image.transpose(2, 0, 1)    # channel first 포맷으로 변경합니다.
@@ -186,3 +184,14 @@ class XRayDataset(Dataset):
             
 if __name__ == "__main__":
     print("hello")
+    img_root = "data/train/DCM"
+    label_root = "data/train/outputs_json"
+    test_img_root = "data/test/DCM"
+    
+    temp_train = XRayDataset(img_root, label_root, CLASSES, 'train', None)
+    temp_val = XRayDataset(img_root, label_root, CLASSES, 'val', None)
+    temp_test = XRayDataset(img_root, None, CLASSES, 'test', None)
+    
+    print(temp_train[0])
+    print(temp_val[0])
+    print(temp_test[0])
