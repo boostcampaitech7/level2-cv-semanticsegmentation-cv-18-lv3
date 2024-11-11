@@ -1,0 +1,3 @@
+IMAGE_ROOT = "train/DCM"
+LABEL_ROOT = "train/outputs_json"
+SAVE_DIR = "outputs"

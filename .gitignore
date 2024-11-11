@@ -5,7 +5,9 @@
 **/.DS_Store
 **/._.DS_Store
 
-**/.jpg
+**/*.jpg
+**/*.png
+data/**/*.json
 
 __pycache__/
 *.py[cod]
