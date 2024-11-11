@@ -1,0 +1,10 @@
+mode: "inference"  
+# train / inference
+random_seed: 42
+
+device: "cuda"
+# cuda / cpu
+
+wandb:
+  user_name: "temp"
+  team_name: "temp"

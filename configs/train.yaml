@@ -1,0 +1,37 @@
+train:
+  batch_size: 16
+  validation_ratio: 0.2
+  num_epochs: 50
+  learning_rate: 0.0001
+  n_splits: 3
+
+  metric: "dice_coef"
+  # accuracy / f1 / precision / recall / mse / dice_coef
+  
+  criterion: "CrossEntropyLoss"
+  # CrossEntropyLoss
+
+  optimizer:
+    name: "Adam"
+    # Adam / SGD
+    weight_decay: 0.0001
+    momentum: 0.9
+
+  lr_scheduler:
+    name: "ReduceLROnPlateau"
+    factor: 0.1
+    patience: 3
+    min_lr: 1e-6
+    monitor: 'metric'
+
+  early_stopping:
+    patience: 5
+    min_delta: 0.001
+    evidence: 'loss'
+    monitor: 'metric'
+  
+model:
+  name: "eff4"
+  # todo
+  pretrained: True
+  
