@@ -17,7 +17,7 @@ def init_wandb(config: Dict[str, Any]) -> None:
         "batch_size": config['train']['batch_size'],
         "learning_rate": config['train']['learning_rate'],
         "optimizer": config['train']['optimizer']['name'],
-        "weight_decay": config['train']['optimizer']['weight_decay'], # 수정 필요
+        "weight_decay": config['train']['optimizer']['weight_decay'], 
         "lr_scheduler": config['train']['lr_scheduler']['name'],
     }
 
