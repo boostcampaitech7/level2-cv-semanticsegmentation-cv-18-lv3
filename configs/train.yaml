@@ -8,12 +8,12 @@ train:
   # accuracy / f1 / precision / recall / mse / dice_coef
   
   criterion: "CrossEntropyLoss"
-  # CrossEntropyLoss
+  # CrossEntropyLoss / BCE
 
   optimizer:
     name: "Adam"
     # Adam / SGD
-    weight_decay: 0.0001
+    weight_decay: 0.000001
     momentum: 0.9
 
   lr_scheduler:
@@ -30,7 +30,7 @@ train:
     monitor: 'metric'
   
 model:
-  name: "eff4"
-  # todo
+  name: "fcn_50"
+  # fcn_50 / 
   pretrained: True
   
