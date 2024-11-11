@@ -1,3 +1,8 @@
-IMAGE_ROOT = "train/DCM"
-LABEL_ROOT = "train/outputs_json"
-SAVE_DIR = "outputs"
+paths:
+  save_dir: "./outputs/saved_models"
+  output_dir: "./outputs/"
+
+  train_image_root: "./data/train/DCM"
+  train_label_root: "./data/train/outputs_json"
+  inf_image_root: "./data/test/DCM"
+  inf_label_root: "./data/test/outputs_json"
