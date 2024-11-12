@@ -2,8 +2,10 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
-import random
 import numpy as np
+from torch import nn, optim
+from torch.utils.data import DataLoader
+from typing import Any, Dict, Tuple
 
 # save model function 
 def save_model(model, save_dir: str, file_name: str = "best_model.pth"):
@@ -12,8 +14,15 @@ def save_model(model, save_dir: str, file_name: str = "best_model.pth"):
     torch.save(model.state_dict(), output_path)
     print(f"Model saved to {output_path}")
 
-
-def train_one_epoch(model, dataloader, criterion, optimizer, device, metric_fn):
+def train_one_epoch(
+                model: nn.Module,
+                dataloader: DataLoader,
+                criterion: nn.Module,
+                optimizer: optim.Optimizer,
+                device: torch.device,
+                metric_fn: Any
+            ) -> Tuple[float, float]:
+    
     model.train()
     total_loss = 0
     all_outputs = []
@@ -23,10 +32,6 @@ def train_one_epoch(model, dataloader, criterion, optimizer, device, metric_fn):
         inputs, labels = batch
         inputs, labels = inputs.to(device), labels.to(device)
 
-        # valid_mask = labels != -1
-        # if not valid_mask.any():
-        #     continue  # 유효한 샘플이 없으면 이 배치를 건너뜁니다
-            
         optimizer.zero_grad()
         outputs = model(inputs)
         
@@ -54,9 +59,17 @@ def train_one_epoch(model, dataloader, criterion, optimizer, device, metric_fn):
 
     return epoch_loss, metric_value
 
-def validate(model, dataloader, criterion, device, metric_fn):
+def validate(
+            model: nn.Module,
+            dataloader: DataLoader,
+            criterion: nn.Module,
+            device: torch.device,
+            metric_fn: Any,
+            threshold: float = 0.5
+        ) -> Tuple[float, float]:
+    
     model.eval()
-    total_loss = 0.0
+    total_loss = 0.0 
     all_outputs = []
     all_labels = []
 
@@ -68,11 +81,20 @@ def validate(model, dataloader, criterion, device, metric_fn):
 
             logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
+            logits_h, logits_w = logits.size(-2), logits.size(-1)
+            labels_h, labels_w = labels.size(-2), labels.size(-1)
+
+            #출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
+            if logits_h != labels_h or logits_w != logits_w:
+                logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+            
             loss = criterion(logits, labels)
             total_loss += loss.item()
 
             probs = torch.sigmoid(logits)
-            all_outputs.append(probs.detach().cpu())
+            # threshold 추가해서 기준 치 이상만 label로 분류 
+            preds = (probs > threshold).float() 
+            all_outputs.append(preds.detach().cpu())
             all_labels.append(labels.detach().cpu())
 
     epoch_loss = total_loss / len(dataloader)
@@ -84,26 +106,3 @@ def validate(model, dataloader, criterion, device, metric_fn):
 
     return epoch_loss, metric_value
 
-# def calculate_class_loss_metric(y_true, y_pred, criterion, metric_fn):
-#     classes = np.unique(y_true)
-#     class_losses = {}
-#     class_metric = {}
-
-#     for cls in classes:
-#         indices = np.where(y_true == cls)
-#         size = len(indices[0])
-#         if size == 0:
-#             continue
-
-#         class_labels = y_true[indices]
-#         class_preds = y_pred[indices]
-        
-#         class_labels_tensor = torch.tensor(class_labels).to(y_pred.device)
-#         class_preds_tensor = y_pred[indices]
-#         loss = criterion(class_preds_tensor, class_labels_tensor).item()
-#         class_losses[cls] = loss / size
-
-#         metric = metric_fn.calculate(class_preds.cpu().numpy(), class_labels)
-#         class_metric[cls] = metric
-
-#     return class_losses, class_metric
