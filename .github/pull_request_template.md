@@ -4,19 +4,21 @@
 ## 커밋 메시지 규칙
 
 - **커밋 메시지 형식**:  
-- 예시: `[gitmoji] pull request template 작성`
+- 이슈 : ✨ FEAT: dataset.py split train & test mode #8
+- PR : ✨ FEAT: dataset.py split train & test mode #8
+- 커밋 : ✨ FEAT: dataset.py split train & test mode #8
 
 - **커밋 타입**
-- `Feat`: 새로운 기능 추가 ✨ 
-- `Fix`: 버그 수정 🐛
-- `Docs`: 문서 수정 및 주석 추가 및 변경 📝
-- `Refactor`: 코드 리팩토링 ♻️
-- `Design`: 코드 포매팅, 세미콜론 누락 등 코드 자체 변경 없음 🎨
-- `Test`: 테스트 코드 추가 및 리팩토링 🧪
-- `Chore`: 기타 변경사항 (빌드 스크립트 수정, assets, 패키지 매니저, .gitignore 등, train.yaml 인자 수정 등 ) ✏️
-- `Rename`: 파일/폴더명 수정 혹은 이동 🚚
-- `Remove`: 파일 삭제 작업만 수행 🔥
-- `Experiment`: 실험일지 ⚗️
+- `FEAT`: 새로운 기능 추가 ✨
+- `FIX`: 버그 수정 🐛
+- `DOCS`: 문서 수정 및 주석 추가 및 변경 📝
+- `REFACTOR`: 코드 리팩토링 ♻️
+- `DESIGN`: 코드 포매팅, 세미콜론 누락 등 코드 자체 변경 없음 🎨
+- `TEST`: 테스트 코드 추가 및 리팩토링 🧪
+- `CHORE`: 기타 변경사항 (빌드 스크립트 수정, assets, 패키지 매니저, .gitignore 등, train.yaml 인자 수정 등 ) ✏️
+- `RENAME`: 파일/폴더명 수정 혹은 이동 🚚
+- `REMOVE`: 파일 삭제 작업만 수행 🔥
+- `EXPERIMENT`: 실험일지 ⚗️
 
 ---
 
