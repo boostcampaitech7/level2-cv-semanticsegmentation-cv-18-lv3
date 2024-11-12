@@ -3,11 +3,11 @@ import re
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader, Subset
-from typing import Dict, Any, Tuple
+from typing import Any
 import albumentations as A
-from utils.datasets import XRayDataset, get_transform
+from src.datasets.dataset import XRayDataset
 
-def get_data_loaders(config: Dict[str, Any]) -> Tuple[DataLoader, DataLoader]:
+def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
     batch_size = config['train']['batch_size']
  
     tf = A.Resize(512, 512) #추후 Augmentation 영역으로 빼야함
@@ -46,15 +46,15 @@ def get_data_loaders(config: Dict[str, Any]) -> Tuple[DataLoader, DataLoader]:
     return train_loader, val_loader
 
 
-def get_inference_loaders(config: Dict[str, Any]) -> DataLoader:
+def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
     
     tf = A.Resize(512, 512)
     
     inference_dataset = XRayDataset(
-        image_root=config['paths']['test_image_root']
-        label_root=config['paths']['test_label_root']
-        classes=config['classes']
-        mode='test'
+        image_root=config['paths']['test_image_root'],
+        label_root=config['paths']['test_label_root'],
+        classes=config['classes'],
+        mode='test',
         transforms=tf
     )
     
