@@ -1,7 +1,6 @@
 train:
   batch_size: 16
   num_epochs: 50
-  learning_rate: 0.0001
   n_splits: 5
 
   metric: "dice_coef"
@@ -15,6 +14,7 @@ train:
     # Adam / SGD
     weight_decay: 0.000001
     momentum: 0.9
+    learning_rate: 0.0001
 
   lr_scheduler:
     name: "ReduceLROnPlateau"

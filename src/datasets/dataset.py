@@ -88,7 +88,7 @@ class XRayDataset(Dataset):
             
             self.labelnames = labelnames
             
-        elif mode == 'test':
+        elif mode == 'inference':
             self.image_root = image_root
             pngs = self.get_pngs()
             filenames = np.array(sorted(pngs))
@@ -147,7 +147,7 @@ class XRayDataset(Dataset):
                 
             return image, label
         
-        elif self.mode == 'test':
+        elif self.mode == 'inference':
             image_name = self.filenames[item]
             image_path = os.path.join(self.image_root, image_name)
             

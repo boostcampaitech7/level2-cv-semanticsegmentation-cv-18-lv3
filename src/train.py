@@ -7,7 +7,7 @@ import datetime
 import uuid
 import os
 from src.utils.trainer import train_one_epoch, validate
-from src.datasets.dataloader import get_data_loaders, get_test_loaders
+from src.datasets.dataloader import get_data_loaders
 from src.utils.metrics import get_metric_function
 from src.models.model_utils import *
 from src.utils.wandb_logger import init_wandb, log_metrics, finish_wandb
@@ -24,11 +24,11 @@ def run(config: Dict[str, Any]) -> float:
     device = torch.device(config['device'])
     model = get_model(config).to(device)
 
-    train_loader, val_loader = get_data_loaders(config, batch_size=config['training']['batch_size'])
+    train_loader, val_loader = get_data_loaders(config)
 
-    criterion = get_criterion(config['training']['criterion'])
+    criterion = get_criterion(config)
     optimizer = get_optimizer(config, model.parameters())
-    scheduler = get_lr_scheduler(optimizer, config['training']['lr_scheduler'])
+    scheduler = get_lr_scheduler(optimizer, config)
 
     metric_fn = get_metric_function(config['training']['metric'])
 
@@ -37,11 +37,11 @@ def run(config: Dict[str, Any]) -> float:
     early_stopping_config = config['training']['early_stopping']
 
     #메인 트레이닝
-    for epoch in range(config['training']['num_epochs']):
+    for epoch in range(config['train']['num_epochs']):
         train_loss, train_metric, train_class_losses, train_class_metric = train_one_epoch(model, train_loader, criterion, optimizer, device, metric_fn)
         val_loss, val_metric, val_class_losses, val_class_metric = validate(model, val_loader, criterion, device, metric_fn)
 
-        print(f"Epoch {epoch+1}/{config['training']['num_epochs']}")
+        print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
         print(f"Train Loss: {train_loss:.4f}, Train Metric: {train_metric:.4f}")
         print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
 
@@ -50,14 +50,14 @@ def run(config: Dict[str, Any]) -> float:
 
 
         if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            if config['training']['lr_scheduler']['monitor'] == 'loss':
+            if config['train']['lr_scheduler']['monitor'] == 'loss':
                 scheduler.step(val_loss)
             else:
                 scheduler.step(val_metric)
         else:
             scheduler.step()
 
-        early_stop_value = val_loss if config['training']['early_stopping']['monitor'] == 'loss' else val_metric
+        early_stop_value = val_loss if early_stopping_config['monitor'] == 'loss' else val_metric
         if metric_fn.is_better(early_stop_value, best_val_metric, early_stopping_config['min_delta']):
             best_val_metric = early_stop_value
             patience_counter = 0

@@ -93,7 +93,8 @@ def get_metric_function(metric_name):
         'f1': F1Score(),
         'precision': Precision(),
         'recall': Recall(),
-        'mse': MSE()
+        'mse': MSE(),
+        'dice_coef': DiceCoef()
     }
     
     if metric_name in metrics:
