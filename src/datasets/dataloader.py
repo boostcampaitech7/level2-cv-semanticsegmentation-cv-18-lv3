@@ -30,14 +30,14 @@ def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=config['train']['batch_size'],
+        batch_size=batch_size,
         shuffle=True,
         num_workers=8,
         drop_last=True
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=config['train']['batch_size'],
+        batch_size=batch_size,
         shuffle=False,
         num_workers=8,
         drop_last=False
