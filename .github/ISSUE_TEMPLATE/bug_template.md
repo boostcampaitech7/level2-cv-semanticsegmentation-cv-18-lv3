@@ -1,7 +1,7 @@
 ---
 name: Bug template
 about: Report an Bug in the project
-title: "[BUG] "
+title: "🐛 BUG: "
 labels: bug
 assignees: ''
 ---

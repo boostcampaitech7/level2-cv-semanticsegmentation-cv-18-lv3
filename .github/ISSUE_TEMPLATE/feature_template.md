@@ -1,7 +1,7 @@
 ---
 name: Feature Request
 about: Introduce new features
-title: "[FEAT] "
+title: "✨ FEAT: "
 labels: feat
 assignees: ''
 ---

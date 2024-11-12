@@ -1,7 +1,7 @@
 ---
 name: Experiments template
 about: Report an exp in the project
-title: "[EXPERIMENT] "
+title: "⚗️ EXPERIMENT: "
 labels: experiment
 assignees: ''
 ---

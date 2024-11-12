@@ -1,7 +1,7 @@
 ---
 name: Docs Request
 about: Report an documentation in the project
-title: "[DOCS] "
+title: "📝 DOCS: "
 labels: documentation
 assignees: ''
 ---
