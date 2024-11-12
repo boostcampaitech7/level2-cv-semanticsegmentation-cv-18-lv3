@@ -19,7 +19,7 @@ def run(config: Dict[str, Any]) -> float:
     os.makedirs(config['paths']['save_dir'], exist_ok=True)
     
     model_name = config['model']['name']
-    threshold = config['train'].get('threshold', 0.5)
+    threshold = config['train']['threshold']
 
     init_wandb(config)
 
