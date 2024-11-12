@@ -14,7 +14,7 @@ from src.utils.data_loaders import get_test_loaders
 from src.utils.rle_convert import encode_mask_to_rle
 
 def run(config):
-    thr = config['thr']
+    threshold = config['train']['threshold']
     classes = config['classes']
     CLASS2IND = {v: i for i, v in enumerate(classes)}
     IND2CLASS = {v: k for k, v in CLASS2IND.items()}
@@ -41,7 +41,7 @@ def run(config):
             outputs = model(images)['out']
             outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear")
             outputs = torch.sigmoid(outputs)
-            outputs = (outputs > thr).detach().cpu().numpy()
+            outputs = (outputs > threshold).detach().cpu().numpy()
 
             for output, image_name in zip(outputs, image_names):
                 for c, segm in enumerate(output):
