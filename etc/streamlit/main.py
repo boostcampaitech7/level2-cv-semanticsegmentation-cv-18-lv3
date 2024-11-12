@@ -78,8 +78,8 @@ elif option == "visualize images & annotations":
             
         else:
             index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=eda.get_test_count()-1, step=1)
-            
-            
+            eda.set_csv(pred_path)
+            eda.plot_pred_only(index)
             
         
 else:

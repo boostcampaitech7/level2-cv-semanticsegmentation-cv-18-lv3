@@ -9,6 +9,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import cv2
+from PIL import Image
 
 class VisualizeMetaData():
     def __init__(self, xlsx_path) -> None:
@@ -166,8 +167,24 @@ class VisualizeImageAndAnnotation():
         st.pyplot(fig)
         
     
-    def plot_pred_only(self):
-        pass
+    def plot_pred_only(self, idx: int):
+        grouped = self.csv_pd.groupby("image_name")
+        
+        image_path = os.path.join(self.test_root, self.tests[idx])
+        
+        image = np.array(Image.open(image_path).convert('RGB'))
+        height, width = image.shape[:2]
+        mask = np.zeros((len(self.palette), height, width), dtype=np.uint8)
+        
+        for _, row in grouped.get_group(self.tests[idx]).iterrows():
+            class_name, rle = row['class'], row['rle']
+            decoded_mask = self.rle_decode(rle, (height, width))
+            mask[self.class2ind[class_name]] = decoded_mask
+        
+        color_mask = self.label2rgb(mask, height, width)
+        blended = cv2.addWeighted(image, 0.5, color_mask, 0.5, 0)
+        blended = Image.fromarray(blended)
+        st.image(blended, caption=f"{self.tests[idx]}")
 
     def label2rgb(self, label):
         image_size = label.shape[1:] + (3, )
@@ -177,15 +194,25 @@ class VisualizeImageAndAnnotation():
             image[class_label == 1] = self.palette[i]
             
         return image
+    
+    def label2rgb(self, label: np.ndarray, height: int, width: int) -> np.ndarray:
+        image = np.zeros((height, width, 3), dtype=np.uint8)
+        for i, class_mask in enumerate(label):
+            image[class_mask == 1] = self.palette[i]
+        return image
+    
+    @staticmethod
+    def rle_decode(mask_rle: str, shape: tuple[int, int]) -> np.ndarray:
+        s = mask_rle.split()
+        starts, lengths = [np.asarray(x, dtype=int) for x in (s[0::2], s[1::2])]
+        starts -= 1
+        ends = starts + lengths
+        img = np.zeros(shape[0] * shape[1], dtype=np.uint8)
+        for lo, hi in zip(starts, ends):
+            img[lo:hi] = 1
+        return img.reshape(shape)
 
-if __name__=="__main__":
-    img_root = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/data/train/DCM"
-    label_root = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/data/train/outputs_json"
-    test_root = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/data/test/DCM"
-    csv_path = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/outputs/saved_models/temp_2020/output_baseline_100ep.csv"
-    VisualizeImageAndAnnotation(img_root, label_root, test_root, csv_path)
-    
-    
+
 class XRayDataset(Dataset):
     def __init__(self, pngs: list, jsons: list, img_root: str, label_root: str, classes: list, class2ind: dict, transforms=None):
         _filenames = np.array(pngs)
@@ -244,5 +271,13 @@ class XRayDataset(Dataset):
         label = torch.from_numpy(label).float()
             
         return image, label
-    
         
+
+if __name__=="__main__":
+    img_root = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/data/train/DCM"
+    label_root = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/data/train/outputs_json"
+    test_root = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/data/test/DCM"
+    csv_path = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/outputs/saved_models/temp_2020/output_baseline_100ep.csv"
+    a = VisualizeImageAndAnnotation(img_root, label_root, test_root, csv_path)
+    a.plot_pred_only(0)
+    
