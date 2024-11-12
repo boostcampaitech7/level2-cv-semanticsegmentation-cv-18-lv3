@@ -29,8 +29,9 @@ def get_config():
         with open(file, 'r') as f:
             config.update(yaml.safe_load(f))
     
-    if config['training'] == 'cuda' and not torch.cuda.is_available():
-        config['training'] = 'cpu'
+    if config['device'] == 'cuda' and not torch.cuda.is_available():
+        print('using cpu now...')
+        config['device'] = 'cpu'
 
     return config
 

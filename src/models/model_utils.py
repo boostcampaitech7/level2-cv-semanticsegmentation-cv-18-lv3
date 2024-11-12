@@ -13,20 +13,20 @@ def get_criterion(criterion_name):
         raise ValueError(f"Unsupported criterion: {criterion_name}")
 
 def get_optimizer(config, model_parameters):
-    optimizer_name = config['training']['optimizer']
+    optimizer_name = config['train']['optimizer']
     if optimizer_name == "Adam":
-        return optim.Adam(model_parameters, lr=config['optimizer']['learning_rate'], 
-                          weight_decay=config['optimizer']['weight_decay'])
+        return optim.Adam(model_parameters, lr=optimizer_config['learning_rate'], 
+                          weight_decay=optimizer_config['weight_decay'])
     elif optimizer_name == "SGD":
-        return optim.SGD(model_parameters, lr=config['optimizer']['learning_rate'], 
-                         momentum=config['optimizer']['momentum'], weight_decay=config['optimizer']['weight_decay'])
+        return optim.SGD(model_parameters, lr=optimizer_config['learning_rate'], 
+                         momentum=optimizer_config['momentum'], weight_decay=optimizer_config['weight_decay'])
     else:
         raise ValueError(f"Unsupported optimizer: {optimizer_name}")
     
 
-def get_lr_scheduler(optimizer, scheduler_config):
-
-    if scheduler_config['name'] == "ReduceLROnPlateau":
+def get_lr_scheduler(optimizer, config):
+    scheduler_config = config['train']['lr_scheduler']
+    if config['name'] == "ReduceLROnPlateau":
         return ReduceLROnPlateau(
             optimizer,
             mode='min',
@@ -42,7 +42,6 @@ def get_lr_scheduler(optimizer, scheduler_config):
 def get_model(config):
     model_name = config['model']['name']
     num_classes = len(config['classes'])
-    
 
     if model_name == 'fcn_50':
         model = models.segmentation.fcn_resnet50(pretrained=config['model']['pretrained'])
