@@ -4,6 +4,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 from typing import Dict, Any, Tuple
+import albumentations as A
 from utils.datasets import XRayDataset, get_transform
 
 def get_data_loaders(config: Dict[str, Any]) -> Tuple[DataLoader, DataLoader]:
@@ -12,18 +13,18 @@ def get_data_loaders(config: Dict[str, Any]) -> Tuple[DataLoader, DataLoader]:
     tf = A.Resize(512, 512) #추후 Augmentation 영역으로 빼야함
 
     train_dataset = XRayDataset(
-        image_root=config['paths']['train_image_root']
-        label_root=config['paths']['train_label_root']
-        classes=config['classes']
-        mode='train'
+        image_root=config['paths']['train_image_root'],
+        label_root=config['paths']['train_label_root'],
+        classes=config['classes'],
+        mode='train',
         transforms=tf
     )
     
     val_dataset = XRayDataset(
-        image_root=config['paths']['train_image_root']
-        label_root=config['paths']['train_label_root']
-        classes=config['classes']
-        mode='val'
+        image_root=config['paths']['train_image_root'],
+        label_root=config['paths']['train_label_root'],
+        classes=config['classes'],
+        mode='val',
         transforms=tf
     )
 
