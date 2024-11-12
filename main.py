@@ -44,7 +44,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config_folder = args.config_folder
-    print(config_folder)
+
     config = get_config(config_folder)
 
     set_random_seed(config['random_seed'])

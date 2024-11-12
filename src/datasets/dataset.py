@@ -183,7 +183,7 @@ class XRayDataset(Dataset):
         }
             
 if __name__ == "__main__":
-    print("hello")
+
     img_root = "data/train/DCM"
     label_root = "data/train/outputs_json"
     test_img_root = "data/test/DCM"
