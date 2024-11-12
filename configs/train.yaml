@@ -4,6 +4,7 @@ train:
   n_splits: 5
   threshold: 0.5
   
+   
   metric: "dice_coef"
   # accuracy / f1 / precision / recall / mse / dice_coef
   
@@ -29,8 +30,6 @@ train:
     min_delta: 0.001
     evidence: 'loss'
     monitor: 'metric'
-  
-
 
 model:
   name: "fcn_50"

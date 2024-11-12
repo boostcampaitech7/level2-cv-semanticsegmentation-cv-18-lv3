@@ -36,16 +36,18 @@ def run(config: Dict[str, Any]) -> float:
     best_val_metric = metric_fn.worst_value
     patience_counter = 0
     early_stopping_config = config['train']['early_stopping']
-
+    val_step = config['data']['val']['val_step']
     #메인 트레이닝
     for epoch in range(config['train']['num_epochs']):
         train_loss, train_metric = train_one_epoch(model, train_loader, criterion, optimizer, device, metric_fn)
-        print('train_loss is', train_loss)
-        val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, threshold)
+
 
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
         print(f"Train Loss: {train_loss:.4f}, Train Metric: {train_metric:.4f}")
-        print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
+        
+        if (epoch+1) % val_step == 0:
+            val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
+            print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
 
         # wandb log 항목별 작성
         log_metrics(epoch, train_loss, train_metric, val_loss, val_metric)

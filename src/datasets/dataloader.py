@@ -8,8 +8,7 @@ import albumentations as A
 from src.datasets.dataset import XRayDataset
 
 def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
-    batch_size = config['train']['batch_size']
- 
+
     tf = A.Resize(512, 512) #추후 Augmentation 영역으로 빼야함
 
     train_dataset = XRayDataset(
@@ -30,16 +29,16 @@ def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=batch_size,
+        batch_size=config['data']['train']['batch_size'],
         shuffle=True,
-        num_workers=8,
+        num_workers=config['data']['train']['num_workers'],
         drop_last=True
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
+        batch_size=config['data']['val']['batch_size'],
         shuffle=False,
-        num_workers=8,
+        num_workers=config['data']['val']['num_workers'],
         drop_last=False
     )
 
@@ -60,9 +59,9 @@ def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
     
     inference_loader = DataLoader(
         inference_dataset,
-        batch_size=2,
+        batch_size=config['data']['inference']['batch_size'],
         shuffle=False,
-        num_workers=4,
+        num_workers=config['data']['infernece']['num_workers'],
         drop_last=False
     )
     

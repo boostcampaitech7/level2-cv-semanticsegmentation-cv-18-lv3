@@ -25,10 +25,9 @@ def train_one_epoch(
     
     model.train()
     total_loss = 0
-    all_outputs = []
-    all_labels = []
 
-    for idx, batch in enumerate(dataloader):
+    all_metric = 0
+    for batch in tqdm(dataloader, desc="Training"):
         inputs, labels = batch
         inputs, labels = inputs.to(device), labels.to(device)
 
@@ -43,22 +42,11 @@ def train_one_epoch(
         optimizer.step()
 
         total_loss += loss.item()
-        
-        # Sigmoid를 적용하여 확률로 변환
-        probs = torch.sigmoid(logits)
-        all_outputs.append(probs.detach().cpu())
-        all_labels.append(labels.detach().cpu())
-        print(idx,total_loss)
+
 
     epoch_loss = total_loss / len(dataloader)
-
-    # 메트릭 계산
-    y_true = torch.cat(all_labels, dim=0)
-    y_pred = torch.cat(all_outputs, dim=0)
-
-    metric_value = metric_fn.calculate(y_pred, y_true).mean().item()
-
-    return epoch_loss, metric_value
+ 
+    return epoch_loss, all_metric
 
 def validate(
             model: nn.Module,
@@ -66,14 +54,14 @@ def validate(
             criterion: nn.Module,
             device: torch.device,
             metric_fn: Any,
+            classes: list,
             threshold: float = 0.5
         ) -> Tuple[float, float]:
     
     model.eval()
     total_loss = 0.0 
-    all_outputs = []
-    all_labels = []
 
+    dices = []
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Validating"):
             inputs, labels = batch
@@ -94,16 +82,22 @@ def validate(
 
             probs = torch.sigmoid(logits)
             # threshold 추가해서 기준 치 이상만 label로 분류 
-            preds = (probs > threshold).float() 
-            all_outputs.append(preds.detach().cpu())
-            all_labels.append(labels.detach().cpu())
+            outputs = (probs > threshold).detach().cpu()
+            masks = labels.detach().cpu()
+            dice = metric_fn.calculate(outputs, masks)
+            dices.append(dice)
 
     epoch_loss = total_loss / len(dataloader)
-
-    y_true = torch.cat(all_labels, dim=0)
-    y_pred = torch.cat(all_outputs, dim=0)
-
-    metric_value = metric_fn.calculate(y_pred, y_true).mean().item()
-
-    return epoch_loss, metric_value
+    
+    dices = torch.cat(dices, 0)
+    dices_per_class = torch.mean(dices, 0)
+    dice_str = [
+        f"{c:<12}: {d.item():.4f}"
+        for c, d in zip(classes, dices_per_class)
+    ]
+    dice_str = "\n".join(dice_str)
+    
+    avg_dice = torch.mean(dices_per_class).item()
+    
+    return epoch_loss, avg_dice
 
