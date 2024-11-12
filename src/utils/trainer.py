@@ -28,7 +28,7 @@ def train_one_epoch(
     all_outputs = []
     all_labels = []
 
-    for batch in tqdm(dataloader, desc="Training"):
+    for idx, batch in enumerate(dataloader):
         inputs, labels = batch
         inputs, labels = inputs.to(device), labels.to(device)
 
@@ -43,11 +43,12 @@ def train_one_epoch(
         optimizer.step()
 
         total_loss += loss.item()
-
+        
         # Sigmoid를 적용하여 확률로 변환
         probs = torch.sigmoid(logits)
         all_outputs.append(probs.detach().cpu())
         all_labels.append(labels.detach().cpu())
+        print(idx,total_loss)
 
     epoch_loss = total_loss / len(dataloader)
 

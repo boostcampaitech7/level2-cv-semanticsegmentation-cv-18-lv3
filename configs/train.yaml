@@ -1,5 +1,5 @@
 train:
-  batch_size: 16
+  batch_size: 4
   num_epochs: 50
   n_splits: 5
   threshold: 0.5

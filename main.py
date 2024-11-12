@@ -6,7 +6,7 @@ import random
 import numpy as np
 import glob
 import argparse
-
+import os
 from src import train
 from src import inference 
 
@@ -20,10 +20,12 @@ def set_random_seed(seed):
     random.seed(seed)
 
 
-def get_config():
+def get_config(config_folder):
     config = {}
 
-    config_files = glob.glob(f'configs/*.yaml')
+    config_folder = os.path.join(config_folder,'*.yaml')
+    
+    config_files = glob.glob(config_folder)
     
     for file in config_files:
         with open(file, 'r') as f:
@@ -42,6 +44,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config_folder = args.config_folder
+    print(config_folder)
     config = get_config(config_folder)
 
     set_random_seed(config['random_seed'])

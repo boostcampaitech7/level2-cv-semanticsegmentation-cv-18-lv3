@@ -40,6 +40,7 @@ def run(config: Dict[str, Any]) -> float:
     #메인 트레이닝
     for epoch in range(config['train']['num_epochs']):
         train_loss, train_metric = train_one_epoch(model, train_loader, criterion, optimizer, device, metric_fn)
+        print('train_loss is', train_loss)
         val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, threshold)
 
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")

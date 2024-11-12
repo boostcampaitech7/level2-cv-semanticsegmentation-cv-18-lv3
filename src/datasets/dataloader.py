@@ -51,8 +51,8 @@ def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
     tf = A.Resize(512, 512)
     
     inference_dataset = XRayDataset(
-        image_root=config['paths']['test_image_root'],
-        label_root=config['paths']['test_label_root'],
+        image_root=config['paths']['inference_image_root'],
+        label_root=config['paths']['inference_label_root'],
         classes=config['classes'],
         mode='test',
         transforms=tf

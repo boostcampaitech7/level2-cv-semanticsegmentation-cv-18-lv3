@@ -1,4 +1,4 @@
-mode: "inference"  
+mode: "train"  
 # train / inference
 random_seed: 42
 

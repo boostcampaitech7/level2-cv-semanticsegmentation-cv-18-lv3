@@ -10,7 +10,7 @@ import os
 import pandas as pd
 import numpy as np
 from src.models.model_utils import get_model
-from src.utils.data_loaders import get_test_loaders
+from src.datasets.dataloader import get_inference_loaders
 from src.utils.rle_convert import encode_mask_to_rle
 
 def run(config):
@@ -23,7 +23,7 @@ def run(config):
 
     model = get_model(config).to(device)
     
-    test_loader = get_test_loaders(config)
+    test_loader = get_inference_loaders(config)
 
     model_name = config['model']['name']
     model_path = os.path.join(config['paths']['save_dir'], f"{model_name}_best_model.pth")
