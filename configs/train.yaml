@@ -1,36 +1,35 @@
 train:
-  batch_size: 16
-  num_epochs: 50
+  batch_size: 4
+  num_epochs: 100
   n_splits: 5
   threshold: 0.5
   
+   
   metric: "dice_coef"
   # accuracy / f1 / precision / recall / mse / dice_coef
   
-  criterion: "CrossEntropyLoss"
-  # CrossEntropyLoss / BCE
+  criterion: "BCEWithLogitsLoss"
+  # CrossEntropyLoss / BCEWithLogitsLoss
 
   optimizer:
     name: "Adam"
     # Adam / SGD
-    weight_decay: 0.000001
+    weight_decay: 1.e-6
     momentum: 0.9
-    learning_rate: 0.0001
+    learning_rate: 1.e-4
 
   lr_scheduler:
     name: "ReduceLROnPlateau"
     factor: 0.1
-    patience: 3
-    min_lr: 1e-6
+    patience: 2
+    min_lr: 1.e-6
     monitor: 'metric'
 
   early_stopping:
-    patience: 5
+    patience: 3
     min_delta: 0.001
     evidence: 'loss'
     monitor: 'metric'
-  
-
 
 model:
   name: "fcn_50"

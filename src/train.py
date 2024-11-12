@@ -36,19 +36,23 @@ def run(config: Dict[str, Any]) -> float:
     best_val_metric = metric_fn.worst_value
     patience_counter = 0
     early_stopping_config = config['train']['early_stopping']
-
+    
+    val_step = config['data']['val']['val_step']
+    val_loss, val_metric = float('INF'), 0
     #메인 트레이닝
     for epoch in range(config['train']['num_epochs']):
-        train_loss, train_metric = train_one_epoch(model, train_loader, criterion, optimizer, device, metric_fn)
-        val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, threshold)
+        train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device)
+
 
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
-        print(f"Train Loss: {train_loss:.4f}, Train Metric: {train_metric:.4f}")
-        print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
-
-        # wandb log 항목별 작성
-        log_metrics(epoch, train_loss, train_metric, val_loss, val_metric)
-
+        print(f"Train Loss: {train_loss:.4f}")
+        
+        if (epoch+1) % val_step == 0:
+            val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
+            print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
+ 
+        log_metrics(epoch, train_loss, val_loss, val_metric)
+        
 
         if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             if config['train']['lr_scheduler']['monitor'] == 'loss':
@@ -65,7 +69,7 @@ def run(config: Dict[str, Any]) -> float:
 
             save_model(model, config['paths']['save_dir'], f"{model_name}_best_model.pth")
         else:
-            patience_counter += 1
+            patience_counter += ((epoch+1) % val_step == 0)
 
         if patience_counter >= early_stopping_config['patience']:
             print(f"Early stopping triggered after {epoch+1} epochs")

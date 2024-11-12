@@ -8,6 +8,7 @@
 **/*.jpg
 **/*.png
 data/**/*.json
+wandb/*
 
 __pycache__/
 *.py[cod]
