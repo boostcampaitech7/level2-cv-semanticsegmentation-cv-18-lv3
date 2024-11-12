@@ -9,6 +9,7 @@
 **/*.png
 data/**/*.json
 wandb/*
+outputs/*.csv
 
 __pycache__/
 *.py[cod]
