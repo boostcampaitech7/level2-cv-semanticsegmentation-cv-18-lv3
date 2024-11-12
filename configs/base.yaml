@@ -1,5 +1,5 @@
 mode: "train"  
-# train / inference
+# train / inference / dev
 random_seed: 42
 
 device: "cuda"

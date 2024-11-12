@@ -48,7 +48,8 @@ def get_lr_scheduler(optimizer: optim.Optimizer, scheduler_config: Dict[str, Any
             mode=mode,
             factor=factor,
             patience=patience,
-            min_lr=min_lr
+            min_lr=min_lr,
+            verbose=True
         )
     else:
         raise ValueError(f"Unknown scheduler: {scheduler_name}")

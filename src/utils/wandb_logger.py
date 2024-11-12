@@ -27,13 +27,12 @@ def init_wandb(config: Dict[str, Any]) -> None:
     except Exception as e:
         print(f"Error during W&B initialization: {e}")
 
-def log_metrics(epoch: int, train_loss: float, train_metric: float, val_loss: float, val_metric: float) -> None:
+def log_metrics(epoch: int, train_loss: float, val_loss: float, val_metric: float) -> None:
     
     try:
         wandb.log({
             "epoch": epoch,
             "train_loss": train_loss,
-            "train_metric": train_metric,
             "val_loss": val_loss,
             "val_metric": val_metric
         })

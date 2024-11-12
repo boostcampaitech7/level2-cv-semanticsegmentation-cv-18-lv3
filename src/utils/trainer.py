@@ -20,13 +20,11 @@ def train_one_epoch(
                 criterion: nn.Module,
                 optimizer: optim.Optimizer,
                 device: torch.device,
-                metric_fn: Any
             ) -> Tuple[float, float]:
     
     model.train()
     total_loss = 0
 
-    all_metric = 0
     for batch in tqdm(dataloader, desc="Training"):
         inputs, labels = batch
         inputs, labels = inputs.to(device), labels.to(device)
@@ -46,7 +44,7 @@ def train_one_epoch(
 
     epoch_loss = total_loss / len(dataloader)
  
-    return epoch_loss, all_metric
+    return epoch_loss
 
 def validate(
             model: nn.Module,
@@ -74,7 +72,7 @@ def validate(
             labels_h, labels_w = labels.size(-2), labels.size(-1)
 
             #출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
-            if logits_h != labels_h or logits_w != logits_w:
+            if logits_h != labels_h or logits_w != labels_w:
                 logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
             
             loss = criterion(logits, labels)
