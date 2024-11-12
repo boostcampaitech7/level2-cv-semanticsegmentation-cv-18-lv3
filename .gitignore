@@ -172,3 +172,5 @@ cython_debug/
 #.idea/
 
 data/meta_data.xlsx
+
+outputs/saved_models/**
