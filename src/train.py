@@ -50,10 +50,8 @@ def run(config: Dict[str, Any]) -> float:
         if (epoch+1) % val_step == 0:
             val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
             print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
-
             #val_step 마다 wandb에 기록 
             log_metrics(epoch, train_loss, val_loss, val_metric)
-
         else:
             #val_step 이 아닌 경우에는 train_loss 만 기록
             log_metrics(epoch, train_loss) 
