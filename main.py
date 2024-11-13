@@ -49,11 +49,12 @@ def save_config(config: Dict[str, Any], output_dir: str):
     
     output_path = os.path.join(folder_path, 'config.yaml')
     
+    config['paths']['output_dir'] = folder_path
+    
     with open(output_path, 'w') as file:
         yaml.dump(config, file)
     
     print(f"Config file saved to {output_path}")
-    return folder_path
 
 if __name__ == "__main__":
     is_debug = True
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     set_random_seed(config['random_seed'])
 
     if mode == 'train':
-        config['paths']['output_dir'] = save_config(config, config['paths']['output_dir'])
+        save_config(config, config['paths']['output_dir'])
         train.run(config)
         
     elif mode == 'inference':
