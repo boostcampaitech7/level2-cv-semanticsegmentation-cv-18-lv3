@@ -16,5 +16,5 @@ classes:  [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
 
 wandb:
-  user_name: "hg"
+  user_name: "" #본인 id 적기
   team_name: "dkvltmxhf-hotclip"
