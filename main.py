@@ -67,7 +67,7 @@ if __name__ == "__main__":
     mode = config['mode']
 
     if mode == 'train':
-        save_config(config, "./configs/")
+        save_config(config, "./outputs/")
         train.run(config)
         
     elif mode == 'inference':

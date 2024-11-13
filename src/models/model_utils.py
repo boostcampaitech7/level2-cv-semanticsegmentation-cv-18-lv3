@@ -4,6 +4,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.optim as optim
 from torchvision import models
 from typing import Any, Dict, Optional
+import segmentation_models_pytorch as smp
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
@@ -65,8 +66,17 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
     elif model_name == 'deeplabv3_101':
         model = models.segmentation.deeplabv3_resnet101(**model_config['config'])
         model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
+    elif 'smp_' in model_name:
+        pass
 
     # 매핑된 모델 이름 가져오기, 없으면 원래 이름 사용
     # model_name = model_mapping.get(model_config_name, model_config_name)
 
     return model
+
+def get_smp_model(model_name: str, classes):
+    
+    
+    
+    
+    return 
