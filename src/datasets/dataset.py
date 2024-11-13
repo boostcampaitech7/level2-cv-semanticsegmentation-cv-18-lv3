@@ -12,6 +12,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 from sklearn.model_selection import GroupKFold
 import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 # torch
 import torch
@@ -21,6 +22,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import models
 
+from src.utils.augmentation import get_transform
 
 CLASSES = [
     'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
@@ -33,6 +35,7 @@ CLASSES = [
 
 CLASS2IND = {v: i for i, v in enumerate(CLASSES)}
 IND2CLASS = {v: k for k, v in CLASS2IND.items()}
+
 
 class XRayDataset(Dataset):
     def __init__(self, image_root: str, label_root: str, classes: list, mode: str='train', transforms=None):
