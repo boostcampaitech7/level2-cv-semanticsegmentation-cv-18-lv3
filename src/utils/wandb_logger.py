@@ -22,7 +22,6 @@ def init_wandb(config: Dict[str, Any]) -> None:
         "weight_decay": config['train']['optimizer']['weight_decay'], 
         "lr_scheduler": config['train']['lr_scheduler']['name'],
     }
-
     # wandb initialize 
     try:
         wandb.init(project=project_name, entity=team_name, config=wandb_config,  name=run_name)
