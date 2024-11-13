@@ -30,7 +30,7 @@ def init_wandb(config: Dict[str, Any]) -> None:
         print(f"Error during W&B initialization: {e}")
 
 def log_metrics(epoch: int, train_loss: float, val_loss: float = None, val_metric: float = None) -> None:
-    
+
     metrics = {
         "epoch": epoch,
         "train_loss": train_loss

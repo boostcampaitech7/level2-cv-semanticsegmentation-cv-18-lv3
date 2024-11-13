@@ -43,7 +43,6 @@ def run(config: Dict[str, Any]) -> float:
     for epoch in range(config['train']['num_epochs']):
         train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device)
 
-
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
         print(f"Train Loss: {train_loss:.4f}")
         
