@@ -1,7 +1,6 @@
 import yaml
 from pathlib import Path
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 import random
 import numpy as np
 import glob
@@ -9,6 +8,9 @@ import argparse
 import os
 from src import train
 from src import inference 
+from datetime import datetime
+import shutil
+from typing import Any, Dict
 
 def set_random_seed(seed):
     torch.manual_seed(seed)
@@ -37,6 +39,20 @@ def get_config(config_folder):
 
     return config
 
+def save_config(config: Dict[str, Any], output_dir: str):
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    folder_name = f"{timestamp}_{config['model']['name']}_{config['developer']}"
+    folder_path = os.path.join(output_dir, folder_name)
+    
+    os.makedirs(folder_path, exist_ok=True)
+    
+    output_path = os.path.join(folder_path, 'config.yaml')
+    
+    with open(output_path, 'w') as file:
+        yaml.dump(config, file)
+    
+    print(f"Config file saved to {output_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
@@ -51,7 +67,9 @@ if __name__ == "__main__":
     mode = config['mode']
 
     if mode == 'train':
+        save_config(config, "./configs/")
         train.run(config)
+        
     elif mode == 'inference':
         inference.run(config)
 
