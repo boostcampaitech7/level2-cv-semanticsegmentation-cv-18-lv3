@@ -53,13 +53,15 @@ def save_config(config: Dict[str, Any], output_dir: str):
         yaml.dump(config, file)
     
     print(f"Config file saved to {output_path}")
+    return folder_path
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
-    parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
+    # parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
+    # args = parser.parse_args()
 
-    config_folder = args.config_folder
+    # config_folder = args.config_folder
+    config_folder = "configs"
 
     config = get_config(config_folder)
 
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     mode = config['mode']
 
     if mode == 'train':
-        save_config(config, "./outputs/")
+        config['paths']['output_dir'] = save_config(config, config['paths']['output_dir'])
         train.run(config)
         
     elif mode == 'inference':

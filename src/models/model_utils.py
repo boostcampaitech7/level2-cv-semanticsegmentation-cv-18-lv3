@@ -5,11 +5,29 @@ import torch.optim as optim
 from torchvision import models
 from typing import Any, Dict, Optional
 import segmentation_models_pytorch as smp
+import torch.nn.functional as F
+
+
+def calc_loss_bce_dice(pred, target, bce_weight=0.5):
+    bce = F.binary_cross_entropy_with_logits(pred, target)
+    pred = F.sigmoid(pred)
+    dice = dice_loss(pred, target)
+    loss = bce * bce_weight + dice * (1 - bce_weight)
+    return loss
+
+def dice_loss(pred, target, smooth = 1.):
+    pred = pred.contiguous()
+    target = target.contiguous()   
+    intersection = (pred * target).sum(dim=2).sum(dim=2)
+    loss = (1 - ((2. * intersection + smooth) / (pred.sum(dim=2).sum(dim=2) +   target.sum(dim=2).sum(dim=2) + smooth)))
+    return loss.mean()
+    
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
         'CrossEntropyLoss': nn.CrossEntropyLoss(),
         'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(),
+        'bce+dice': calc_loss_bce_dice
     }
     if criterion_name in criterions:
         return criterions[criterion_name]
@@ -67,16 +85,17 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
         model = models.segmentation.deeplabv3_resnet101(**model_config['config'])
         model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
     elif 'smp_' in model_name:
-        pass
+        model_name = model_name.split('_')[1]
+        
+        if model_name == 'unet':
+            model = smp.Unet('resnet34', encoder_weights="imagenet", classes=num_classes)
+            
+        else:
+            raise ValueError(f"Unknown model: {model_name}")
+    else:
+        raise ValueError(f"Unkown model: {model_name}")
 
     # 매핑된 모델 이름 가져오기, 없으면 원래 이름 사용
     # model_name = model_mapping.get(model_config_name, model_config_name)
 
     return model
-
-def get_smp_model(model_name: str, classes):
-    
-    
-    
-    
-    return 

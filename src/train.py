@@ -15,9 +15,6 @@ from typing import Any, Dict
 
 
 def run(config: Dict[str, Any]) -> float:
-    
-    os.makedirs(config['paths']['save_dir'], exist_ok=True)
-    
     model_name = config['model']['name']
     threshold = config['train']['threshold']
 
@@ -67,7 +64,7 @@ def run(config: Dict[str, Any]) -> float:
             best_val_metric = early_stop_value
             patience_counter = 0
 
-            save_model(model, config['paths']['save_dir'], f"{model_name}_best_model.pth")
+            save_model(model, config['paths']['output_dir'], f"{model_name}_best_model.pth")
         else:
             patience_counter += ((epoch+1) % val_step == 0)
 

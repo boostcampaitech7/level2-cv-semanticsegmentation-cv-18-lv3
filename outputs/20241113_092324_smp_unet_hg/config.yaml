@@ -45,12 +45,12 @@ mode: train
 model:
   config:
     pretrained: true
-  name: fcn_50
+  name: smp_unet
 paths:
   inference_image_root: ./data/test/DCM
   inference_label_root: ./data/test/outputs_json
+  inference_path: outputs/20241113_074538_fcn_50_hg
   output_dir: ./outputs/
-  save_dir: ./outputs/saved_models
   train_image_root: ./data/train/DCM
   train_label_root: ./data/train/outputs_json
 random_seed: 42
@@ -78,7 +78,6 @@ train:
   optimizer:
     config:
       lr: 0.0001
-      momentum: 0.9
       weight_decay: 1.0e-06
     name: Adam
   threshold: 0.5

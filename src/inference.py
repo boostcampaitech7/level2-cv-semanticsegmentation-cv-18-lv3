@@ -18,7 +18,7 @@ def run(config):
     classes = config['classes']
     CLASS2IND = {v: i for i, v in enumerate(classes)}
     IND2CLASS = {v: k for k, v in CLASS2IND.items()}
-    output_dir = os.path.join(config['paths']['output_dir'],'output.csv')
+    output_dir = os.path.join(config['paths']['inference_path'],'output.csv')
     device = torch.device(config['device'])
 
     model = get_model(config).to(device)
@@ -28,7 +28,10 @@ def run(config):
     model_name = config['model']['name']
     model_path = os.path.join(config['paths']['save_dir'], f"{model_name}_best_model.pth")
     
-    model.load_state_dict(torch.load(model_path, map_location='cpu'))
+    pth_ = torch.load(model_path, map_location='cpu')
+    pth_ = pth_['model_state_dict'] if isinstance(pth_, dict) else pth_
+    
+    model.load_state_dict(pth_)
     model.to(device)
     model.eval()
 

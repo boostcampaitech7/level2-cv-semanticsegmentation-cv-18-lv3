@@ -5,7 +5,7 @@ random_seed: 42
 device: "cuda"
 # cuda / cpu
 
-developer: "hg"
+developer: "kh"
 
 classes:  [
     'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
