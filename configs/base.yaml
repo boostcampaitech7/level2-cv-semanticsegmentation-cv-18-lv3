@@ -5,6 +5,8 @@ random_seed: 42
 device: "cuda"
 # cuda / cpu
 
+developer: "hg"
+
 classes:  [
     'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
     'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
@@ -14,5 +16,5 @@ classes:  [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
 
 wandb:
-  user_name: "temp"
-  team_name: "temp"
+  user_name: "hg"
+  team_name: "dkvltmxhf-hotclip"
