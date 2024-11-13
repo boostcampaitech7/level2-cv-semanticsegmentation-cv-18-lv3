@@ -44,7 +44,6 @@ def log_metrics(epoch: int, train_loss: float, val_loss: float = None, val_metri
     except Exception as e:
         print(f"Error recording W&B logs: {e}")
 
-
 def finish_wandb():
     try:
         wandb.finish()
