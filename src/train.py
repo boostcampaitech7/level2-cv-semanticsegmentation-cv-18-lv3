@@ -54,7 +54,7 @@ def run(config: Dict[str, Any]) -> float:
             log_metrics(epoch, train_loss) 
 
         if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            if (epoch+1) % val_step == 0 and config['train']['lr_scheduler']['monitor'] == 'loss':
+            if config['train']['lr_scheduler']['monitor'] == 'loss':
                 scheduler.step(val_loss)
             else:
                 scheduler.step(val_metric)
