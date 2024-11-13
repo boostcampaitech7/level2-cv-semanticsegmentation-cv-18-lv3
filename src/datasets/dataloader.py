@@ -53,7 +53,7 @@ def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
         image_root=config['paths']['inference_image_root'],
         label_root=config['paths']['inference_label_root'],
         classes=config['classes'],
-        mode='test',
+        mode='inference',
         transforms=tf
     )
     
@@ -61,7 +61,7 @@ def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
         inference_dataset,
         batch_size=config['data']['inference']['batch_size'],
         shuffle=False,
-        num_workers=config['data']['infernece']['num_workers'],
+        num_workers=config['data']['inference']['num_workers'],
         drop_last=False
     )
     
