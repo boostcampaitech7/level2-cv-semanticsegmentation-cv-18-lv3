@@ -24,14 +24,14 @@ def run(config: Dict[str, Any]) -> float:
     init_wandb(config)
 
     device = torch.device(config['device'])
-    model = get_model(config).to(device)
+    model = get_model(config['model'], config['classes']).to(device)
 
     train_loader, val_loader = get_data_loaders(config)
 
-    criterion = get_criterion(config['train']['criterion'])
-    optimizer = get_optimizer(config, model.parameters())
+    criterion = get_criterion(config['train']['criterion']['name'])
+    optimizer = get_optimizer(config['train']['optimizer'], model.parameters())
     scheduler = get_lr_scheduler(optimizer, config['train']['lr_scheduler'])
-    metric_fn = get_metric_function(config['train']['metric'])
+    metric_fn = get_metric_function(config['train']['metric']['name'])
 
     best_val_metric = metric_fn.worst_value
     patience_counter = 0

@@ -15,18 +15,15 @@ def get_criterion(criterion_name: str) -> nn.Module:
     else:
         raise ValueError(f"Unknown criterion: {criterion_name}")
 
-
-def get_optimizer(config : Dict[str, Any], parameters) -> optim.Optimizer :
-    optimizer_config = config['train']['optimizer']
+def get_optimizer(optimizer_config : Dict[str, Any], parameters) -> optim.Optimizer :
     optimizer_name = optimizer_config['name']
-    lr = optimizer_config['learning_rate']
-    weight_decay = optimizer_config.get('weight_decay', 0.0)
-    momentum = optimizer_config.get('momentum', 0.0)
 
     if optimizer_name == 'Adam':
-        optimizer = optim.Adam(parameters, lr=lr, weight_decay=weight_decay)
+        # lr, weight_decay
+        optimizer = optim.Adam(parameters, **optimizer_config['config'])
     elif optimizer_name == 'SGD':
-        optimizer = optim.SGD(parameters, lr=lr, momentum=momentum, weight_decay=weight_decay)
+        # lr, momentum, weight_decay
+        optimizer = optim.SGD(parameters, **optimizer_config['config'])
     else:
         raise ValueError(f"Unknown optimizer: {optimizer_name}")
 
@@ -34,22 +31,17 @@ def get_optimizer(config : Dict[str, Any], parameters) -> optim.Optimizer :
 
 def get_lr_scheduler(optimizer: optim.Optimizer, scheduler_config: Dict[str, Any]):
     scheduler_name = scheduler_config['name']
+    monitor = scheduler_config.get('monitor', 'metric')
 
     if scheduler_name == 'ReduceLROnPlateau':
-        factor = scheduler_config.get('factor', 0.1)
-        patience = scheduler_config.get('patience', 3)
-        min_lr = scheduler_config.get('min_lr', 1e-6)
-        monitor = scheduler_config.get('monitor', 'metric')
+        # factor, patience, min_lr, monitor
 
         mode = 'min' if monitor == 'loss' else 'max'
 
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
             mode=mode,
-            factor=factor,
-            patience=patience,
-            min_lr=min_lr,
-            verbose=True
+            **scheduler_config['config']
         )
     else:
         raise ValueError(f"Unknown scheduler: {scheduler_name}")
@@ -57,21 +49,21 @@ def get_lr_scheduler(optimizer: optim.Optimizer, scheduler_config: Dict[str, Any
     return scheduler
 
 # timm 라이브러리에서 모델 불러오기
-def get_model(config):
-    model_name = config['model']['name']
-    num_classes = len(config['classes'])
+def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
+    model_name = model_config['name']
+    num_classes = len(classes)
 
     if model_name == 'fcn_50':
-        model = models.segmentation.fcn_resnet50(pretrained=config['model']['pretrained'])
+        model = models.segmentation.fcn_resnet50(**model_config['config'])
         model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
     elif model_name == 'fcn_101':
-        model = models.segmentation.fcn_resnet101(pretrained=config['model']['pretrained'])
+        model = models.segmentation.fcn_resnet101(**model_config['config'])
         model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
     elif model_name == 'deeplabv3_50':
-        model = models.segmentation.deeplabv3_resnet50(pretrained=config['model']['pretrained'])
+        model = models.segmentation.deeplabv3_resnet50(**model_config['config'])
         model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)        
     elif model_name == 'deeplabv3_101':
-        model = models.segmentation.deeplabv3_resnet101(pretrained=config['model']['pretrained'])
+        model = models.segmentation.deeplabv3_resnet101(**model_config['config'])
         model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
 
     # 매핑된 모델 이름 가져오기, 없으면 원래 이름 사용

@@ -4,10 +4,12 @@ train:
   n_splits: 5
   threshold: 0.5
    
-  metric: "dice_coef"
+  metric: 
+    name: "dice_coef"
   # accuracy / f1 / precision / recall / mse / dice_coef
   
-  criterion: "BCEWithLogitsLoss"
+  criterion: 
+    name: "BCEWithLogitsLoss"
   # CrossEntropyLoss / BCEWithLogitsLoss
 
   optimizer:
@@ -15,8 +17,8 @@ train:
     # Adam / SGD
     config:
       weight_decay: 1.e-6
-      momentum: 0.9
-      learning_rate: 1.e-4
+      # momentum: 0.9
+      lr: 1.e-4
 
   lr_scheduler:
     name: "ReduceLROnPlateau"
