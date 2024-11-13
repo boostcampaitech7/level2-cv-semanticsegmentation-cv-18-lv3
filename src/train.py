@@ -52,6 +52,7 @@ def run(config: Dict[str, Any]) -> float:
             print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
 
             #val_step 마다 wandb에 기록 
+            
             log_metrics(epoch, train_loss, val_loss, val_metric)
 
         else:
