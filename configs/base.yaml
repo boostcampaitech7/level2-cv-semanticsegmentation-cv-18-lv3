@@ -14,5 +14,5 @@ classes:  [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
 
 wandb:
-  user_name: "temp"
-  team_name: "temp"
+  user_name: "jhj0628"
+  team_name: "dkvltmxhf-hotclip"

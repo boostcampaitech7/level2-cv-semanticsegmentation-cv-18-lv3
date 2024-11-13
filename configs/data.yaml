@@ -5,7 +5,7 @@ data:
   val:
     batch_size: 4  
     num_workers: 0 
-    val_step: 5
+    val_step: 2
 
   inference:
     batch_size: 2
