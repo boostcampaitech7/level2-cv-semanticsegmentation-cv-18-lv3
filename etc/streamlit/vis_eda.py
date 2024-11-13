@@ -156,7 +156,7 @@ class VisualizeImageAndAnnotation():
         
         image = (image * 255).astype(np.uint8)
         
-        label_rgb = self.label2rgb(label)
+        label_rgb = self.label2rgb2(label)
         
         fig, ax = plt.subplots(1, 1, figsize=(10, 5))
         ax.imshow(image)
@@ -186,7 +186,7 @@ class VisualizeImageAndAnnotation():
         blended = Image.fromarray(blended)
         st.image(blended, caption=f"{self.tests[idx]}")
 
-    def label2rgb(self, label):
+    def label2rgb2(self, label):
         image_size = label.shape[1:] + (3, )
         image = np.zeros(image_size, dtype=np.uint8)
         
