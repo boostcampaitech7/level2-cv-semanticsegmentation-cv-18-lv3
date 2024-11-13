@@ -2,6 +2,14 @@ data:
   train:
     batch_size: 4
     num_workers: 8
+    augmentation:
+      crop: 1
+      flip: 1
+      rotation: 1
+      affine: 1
+      sharpen: 1
+      contrast: 1
+
   val:
     batch_size: 4  
     num_workers: 0 
