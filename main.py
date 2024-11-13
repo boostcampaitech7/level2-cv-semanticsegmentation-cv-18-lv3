@@ -56,17 +56,23 @@ def save_config(config: Dict[str, Any], output_dir: str):
     return folder_path
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
-    # parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
-    # args = parser.parse_args()
+    is_debug = True
+    
+    if is_debug:
+        config_folder = "configs"
+        mode = 'train'
+    else:
+        parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
+        parser.add_argument('--mode', required=True, help="Select mode(train/inference/dev)")
+        parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
+        args = parser.parse_args()
 
-    # config_folder = args.config_folder
-    config_folder = "configs"
+        config_folder = args.config_folder
+        mode = args.mode
 
     config = get_config(config_folder)
 
     set_random_seed(config['random_seed'])
-    mode = config['mode']
 
     if mode == 'train':
         config['paths']['output_dir'] = save_config(config, config['paths']['output_dir'])
