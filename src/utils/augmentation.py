@@ -10,19 +10,37 @@ def get_transform(config, is_train=True):
 
     if is_train:
         aug_dict = config['data']['train'].get('augmentation', {})
-        for aug_name, aug_prob in aug_dict.items():
+        for aug_name, aug_params in aug_dict.items():
+            prob = aug_params.get('prob', 1)
+
             if aug_name == 'crop':
-                aug_ops.append(RandomCrop(150, 150, p=aug_prob))
+                height = aug_params.get('height', 150)
+                width = aug_params.get('width', 150)
+                aug_ops.append(RandomCrop(height=height, width=width, p=prob))
+            
             elif aug_name == 'flip':
-                aug_ops.append(HorizontalFlip(p=aug_prob))
+                aug_ops.append(HorizontalFlip(p=prob))
+
             elif aug_name == 'rotation':
-                aug_ops.append(Rotate(limit=45, p=aug_prob))
+                limit = aug_params.get('limit', 45)
+                aug_ops.append(Rotate(limit=limit, p=prob))
+
             elif aug_name == 'affine':
-                aug_ops.append(Affine(scale=(0.9, 1.1), translate_percent=(0.1, 0.1), rotate=30, shear=15, p=aug_prob))
+                scale = tuple(aug_params.get('scale', [0.9, 1.1]))
+                translate_percent = tuple(aug_params.get('translate_percent', [0.1, 0.1]))
+                rotate = aug_params.get('rotate', 30)
+                shear = aug_params.get('shear', 15)
+                aug_ops.append(Affine(scale=scale, translate_percent=translate_percent, rotate=rotate, shear=shear, p=prob))
+
             elif aug_name == 'sharpen':
-                aug_ops.append(Sharpen(alpha=(0.2, 0.5), lightness=(0.5, 1.5), p=aug_prob))
+                alpha = tuple(aug_params.get('alpha', [0.2, 0.5]))
+                lightness = tuple(aug_params.get('lightness', [0.5, 1.5]))
+                aug_ops.append(Sharpen(alpha=alpha, lightness=lightness, p=prob))
+            
             elif aug_name == 'contrast':
-                aug_ops.append(RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=aug_prob))
+                brightness_limit = aug_params.get('brightness_limit', 0.3)
+                contrast_limit = aug_params.get('contrast_limit', 0.3)
+                aug_ops.append(RandomBrightnessContrast(brightness_limit=brightness_limit, contrast_limit=contrast_limit, p=prob))
 
     return Compose(aug_ops)
 

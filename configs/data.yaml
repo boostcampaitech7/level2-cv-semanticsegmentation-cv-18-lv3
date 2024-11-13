@@ -2,13 +2,32 @@ data:
   train:
     batch_size: 4
     num_workers: 8
-    augmentation:
-      crop: 1
-      flip: 1
-      rotation: 1
-      affine: 1
-      sharpen: 1
-      contrast: 1
+    augmentation: 
+    # crop / flip / rotation / affine / sharpen / contrast
+      crop:
+        prob: 1
+        height: 150
+        width: 150
+      flip:
+        prob: 1
+      rotation:
+        prob: 1
+        limit: 45
+      affine: 
+        prob: 1
+        scale: [0.9, 1.1]
+        translate_percent: [0.1, 0.1]
+        rotate: 30
+        shear: 15
+      sharpen:
+        prob: 1
+        alpha: [0.2, 0.5]
+        lightness: [0.5, 1.5]
+      contrast:
+        prob: 1
+        brightness_limit: 0.3
+        contrast_limit: 0.3
+
 
   val:
     batch_size: 4  
