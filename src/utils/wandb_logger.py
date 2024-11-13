@@ -10,7 +10,7 @@ def init_wandb(config: Dict[str, Any]) -> None:
     team_name = config['wandb']['team_name']
 
     project_name = f"{model_name}_{user_name}_{current_date}"
-
+    
     run_name = f"{model_name}_{user_name}_{current_date}"
     
     # wandb config 
