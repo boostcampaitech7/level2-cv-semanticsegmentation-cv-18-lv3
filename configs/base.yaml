@@ -12,6 +12,7 @@ classes:  [
     'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
     'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
+
 wandb:
-  user_name: "jhj0628"
+  user_name: "" #본인 id 적기
   team_name: "dkvltmxhf-hotclip"
