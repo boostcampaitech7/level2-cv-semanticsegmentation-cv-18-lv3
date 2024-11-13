@@ -65,7 +65,6 @@ def validate(
             inputs, labels = batch
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
-
             logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
             logits_h, logits_w = logits.size(-2), logits.size(-1)
