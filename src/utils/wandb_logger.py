@@ -17,9 +17,9 @@ def init_wandb(config: Dict[str, Any]) -> None:
     wandb_config = {
         "model_name": config['model']['name'],
         "batch_size": config['train']['batch_size'],
-        "learning_rate": config['train']['optimizer']['learning_rate'],
+        "learning_rate": config['train']['optimizer']['config']['lr'],
         "optimizer": config['train']['optimizer']['name'],
-        "weight_decay": config['train']['optimizer']['weight_decay'], 
+        "weight_decay": config['train']['optimizer']['config']['weight_decay'], 
         "lr_scheduler": config['train']['lr_scheduler']['name'],
     }
     # wandb initialize 

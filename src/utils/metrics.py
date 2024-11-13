@@ -87,7 +87,7 @@ class DiceCoef(Metric):
     def is_better(new, old, min_delta):
         return new > old + min_delta
 
-def get_metric_function(metric_name):
+def get_metric_function(metric_name: str):
     metrics = {
         'accuracy': Accuracy(),
         'f1': F1Score(),

@@ -1,6 +1,6 @@
 paths:
-  save_dir: "./outputs/saved_models"
   output_dir: "./outputs/"
+  inference_path: "outputs/20241113_074538_fcn_50_hg"
 
   train_image_root: "./data/train/DCM"
   train_label_root: "./data/train/outputs_json"
