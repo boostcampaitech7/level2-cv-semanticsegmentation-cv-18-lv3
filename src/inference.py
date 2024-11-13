@@ -18,7 +18,7 @@ def run(config):
     classes = config['classes']
     CLASS2IND = {v: i for i, v in enumerate(classes)}
     IND2CLASS = {v: k for k, v in CLASS2IND.items()}
-    
+    output_dir = os.path.join(config['paths']['output_dir'],'output.csv')
     device = torch.device(config['device'])
 
     model = get_model(config).to(device)
@@ -56,4 +56,5 @@ def run(config):
         "class": classes,
         "rle": rles,
     })
-    df.to_csv("output.csv", index=False)
+    
+    df.to_csv(output_dir, index=False)
