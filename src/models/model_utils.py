@@ -64,9 +64,17 @@ def get_model(config):
     if model_name == 'fcn_50':
         model = models.segmentation.fcn_resnet50(pretrained=config['model']['pretrained'])
         model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
+    elif model_name == 'fcn_101':
+        model = models.segmentation.fcn_resnet101(pretrained=config['model']['pretrained'])
+        model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
+    elif model_name == 'deeplabv3_50':
+        model = models.segmentation.deeplabv3_resnet50(pretrained=config['model']['pretrained'])
+        model.classifier[3] = nn.Conv2d(256, num_classes, kernel_size=1)
+    elif model_name == 'deeplabv3_101':
+        model = models.segmentation.deeplabv3_resnet101(pretrained=config['model']['pretrained'])
+        model.classifier[3] = nn.Conv2d(256, num_classes, kernel_size=1)
 
     # 매핑된 모델 이름 가져오기, 없으면 원래 이름 사용
-    #model_name = model_mapping.get(model_config_name, model_config_name)
-
+    # model_name = model_mapping.get(model_config_name, model_config_name)
 
     return model
