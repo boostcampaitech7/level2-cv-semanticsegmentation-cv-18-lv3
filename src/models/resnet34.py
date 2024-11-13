@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 class ConvBlock(nn.Module): # 기본적으로 사용할 3x3 Conv Block 정의
-    expansion = 1  
 
     def __init__(self, in_channels: int, out_channels: int, stride: int=1):
         super(ConvBlock, self).__init__()
@@ -62,28 +61,33 @@ class ResNet34(nn.Module):
     def __init__(self):
         super(ResNet34, self).__init__()
         
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=1, padding=3, bias=False)
         #들어오자마자 7x7 레이어 적용함 초기 RGB(3)에서 64로 channel 옮기고, 여기서 사이즈 반으로
         #7x7 kernel, stride=2면 padding이 3이어야 정확히 반띵
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
         #이건 왜 3x3인지 모름, 위 블로그 참고함 아무튼 여기까지 거쳤으면
         # 초기 512x512x3 이미지가 128x128x64까지 온 상태
        
-        self.layer1 = LayerBlock(64, 64, 3, 1)
-        self.layer2 = LayerBlock(64, 128, 3, 2)
-        self.layer3 = LayerBlock(128, 256, 3, 2)
-        self.layer4 = LayerBlock(256, 512, 3, 2)
+        self.layer1 = LayerBlock(64, 64, 3, 1) #256x256x64
+        self.layer2 = LayerBlock(64, 128, 3, 2) #128x128x128
+        self.layer3 = LayerBlock(128, 256, 3, 2) #64x64x256
+        self.layer4 = LayerBlock(256, 512, 3, 2) #32x32x512
         
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
- 
     def forward(self, x):
         
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        x1 = self.maxpool(x)
 
-        return x
+        x2 = self.layer1(x1)
+        x3 = self.layer2(x2)
+        x4 = self.layer3(x3)
+        x5 = self.layer4(x4)
+        
+        return x1, x2, x3, x4, x5
+    
+
