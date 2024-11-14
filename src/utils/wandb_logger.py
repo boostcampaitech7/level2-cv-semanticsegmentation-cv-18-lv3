@@ -9,7 +9,7 @@ def init_wandb(config: Dict[str, Any]) -> None:
     user_name = config['wandb']['user_name']
     team_name = config['wandb']['team_name']
 
-    project_name = f"{model_name}_{user_name}_{current_date}"
+    project_name = f"{model_name}"
     
     run_name = f"{model_name}_{user_name}_{current_date}"
     
@@ -21,7 +21,9 @@ def init_wandb(config: Dict[str, Any]) -> None:
         "optimizer": config['train']['optimizer']['name'],
         "weight_decay": config['train']['optimizer']['config']['weight_decay'], 
         "lr_scheduler": config['train']['lr_scheduler']['name'],
+        "owner" : user_name #누가 돌렸는 지 정보 추가 
     }
+    
     # wandb initialize 
     try:
         wandb.init(project=project_name, entity=team_name, config=wandb_config,  name=run_name)
