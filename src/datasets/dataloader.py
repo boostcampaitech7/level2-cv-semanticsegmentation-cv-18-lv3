@@ -49,7 +49,7 @@ def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
 
 def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
     
-    inference_transforms = get_transform(config, is_train=False)
+    inference_transforms = get_transform(config['data'], is_train=False)
     
     inference_dataset = XRayDataset(
         image_root=config['paths']['inference_image_root'],

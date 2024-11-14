@@ -12,6 +12,8 @@ from datetime import datetime
 import shutil
 from typing import Any, Dict
 
+from etc.dev.dev_utils import dev_paths_setting
+
 def set_random_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -39,8 +41,11 @@ def get_config(config_folder):
 
     return config
 
-def save_config(config: Dict[str, Any], output_dir: str):
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+def save_config(config: Dict[str, Any], output_dir: str, mode: str='train') -> None:
+    if mode == 'dev_train':
+        timestamp = 'dev'
+    else:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
     folder_name = f"{timestamp}_{config['model']['name']}_{config['developer']}"
     folder_path = os.path.join(output_dir, folder_name)
@@ -60,11 +65,11 @@ if __name__ == "__main__":
     is_debug = True
     
     if is_debug:
-        config_folder = "configs"
-        mode = 'train'
+        config_folder = "outputs/dev_smp_unet_kh"
+        mode = 'dev_inference'
     else:
         parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
-        parser.add_argument('--mode', required=True, help="Select mode(train/inference/dev)")
+        parser.add_argument('--mode', required=True, help="Select mode(train/inference/dev_train/dev_inference)")
         parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
         args = parser.parse_args()
 
@@ -72,7 +77,6 @@ if __name__ == "__main__":
         mode = args.mode
 
     config = get_config(config_folder)
-
     set_random_seed(config['random_seed'])
 
     if mode == 'train':
@@ -81,6 +85,15 @@ if __name__ == "__main__":
         
     elif mode == 'inference':
         inference.run(config)
-
+        
+    elif mode == 'dev_train':
+        dev_paths_setting(config['paths'])
+        save_config(config, config['paths']['output_dir'], mode)
+        train.run(config)
+        
+    elif mode == 'dev_inference':
+        dev_paths_setting(config['paths'])
+        inference.run(config)
+        
     else:
         raise ValueError(f"Invalid mode: {mode}")
