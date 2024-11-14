@@ -36,8 +36,20 @@ def run(config: Dict[str, Any]) -> float:
     
     val_step = config['data']['val']['val_step']
     val_loss, val_metric = float('INF'), 0
+
+    #체크포인트 resume
+    start_epoch = 0
+    if config['train']['resume'] and config['train']['ckpt_path']:
+        print(f"checkpoint resume ... ")
+        checkpoint = torch.load(config['train']['ckpt_path'], map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1  # 이어서 학습할 epoch 설정
+        best_val_metric = checkpoint.get('best_val_metric', best_val_metric)
+        print(f"Resuming training from epoch {start_epoch}")
+
     #메인 트레이닝
-    for epoch in range(config['train']['num_epochs']):
+    for epoch in range(start_epoch, config['train']['num_epochs']):
         train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device)
 
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
@@ -65,8 +77,14 @@ def run(config: Dict[str, Any]) -> float:
         if metric_fn.is_better(early_stop_value, best_val_metric, early_stopping_config['min_delta']):
             best_val_metric = early_stop_value
             patience_counter = 0
-
-            save_model(model, config['paths']['output_dir'], f"{model_name}_best_model.pth")
+            
+            save_model({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'best_val_metric': best_val_metric
+            }, config['paths']['output_dir'], f"{model_name}_best_model.pth")
+        
         else:
             patience_counter += ((epoch+1) % val_step == 0)
 
