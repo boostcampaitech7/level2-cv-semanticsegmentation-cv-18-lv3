@@ -10,8 +10,8 @@ from src.utils.augmentation import get_transform, load_config # get_augmentation
 
 def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
 
-    train_transforms = get_transform(config, is_train=True)
-    val_transforms = get_transform(config, is_train=False)
+    train_transforms = get_transform(config['data'], is_train=True)
+    val_transforms = get_transform(config['data'], is_train=False)
 
     train_dataset = XRayDataset(
         image_root=config['paths']['train_image_root'],
