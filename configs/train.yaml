@@ -14,8 +14,8 @@ train:
   ckpt_path : ""
 
   criterion: 
-    name: "BCEWithLogitsLoss"
-  # CrossEntropyLoss / BCEWithLogitsLoss
+    name: "bce+dice"
+  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice
 
   optimizer:
     name: "Adam"
@@ -35,7 +35,7 @@ train:
       verbose: True
 
   early_stopping:
-    patience: 3
+    patience: 5
     min_delta: 0.001
     evidence: 'loss'
     monitor: 'metric'
