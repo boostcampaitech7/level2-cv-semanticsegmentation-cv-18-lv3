@@ -1,7 +1,38 @@
 data:
+  base_augmentation:
+    resize:
+      width: 512
+      height: 512
+  
   train:
     batch_size: 4
     num_workers: 8
+    augmentation:
+      resize / crop / hflip / rotate / affine / sharpen contrast
+      crop:
+        p: 1
+        width: 150
+        height: 150
+      hflip:
+        p: 1
+      rotate:
+        p: 1
+        limit: 45
+      affine: 
+        p: 1
+        scale: [0.9, 1.1]
+        translate_percent: [0.1, 0.1]
+        rotate: 30
+        shear: 15
+      sharpen:
+        p: 1
+        alpha: [0.2, 0.5]
+        lightness: [0.5, 1.5]
+      contrast:
+        p: 1
+        brightness_limit: 0.3
+        contrast_limit: 0.3
+
   val:
     batch_size: 4  
     num_workers: 0 

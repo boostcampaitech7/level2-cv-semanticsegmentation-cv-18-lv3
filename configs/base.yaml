@@ -1,9 +1,9 @@
-mode: "train"  
-# train / inference / dev
 random_seed: 42
 
 device: "cuda"
 # cuda / cpu
+
+developer: "kh"
 
 classes:  [
     'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
@@ -14,5 +14,5 @@ classes:  [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
 
 wandb:
-  user_name: "temp"
-  team_name: "temp"
+  user_name: "" #본인 id 적기
+  team_name: "dkvltmxhf-hotclip"

@@ -9,36 +9,41 @@ def init_wandb(config: Dict[str, Any]) -> None:
     user_name = config['wandb']['user_name']
     team_name = config['wandb']['team_name']
 
-    project_name = f"{model_name}_{user_name}_{current_date}"
-
+    project_name = f"{model_name}"
+    
+    run_name = f"{model_name}_{user_name}_{current_date}"
+    
     # wandb config 
     wandb_config = {
         "model_name": config['model']['name'],
         "batch_size": config['train']['batch_size'],
-        "learning_rate": config['train']['optimizer']['learning_rate'],
+        "learning_rate": config['train']['optimizer']['config']['lr'],
         "optimizer": config['train']['optimizer']['name'],
-        "weight_decay": config['train']['optimizer']['weight_decay'], 
+        "weight_decay": config['train']['optimizer']['config']['weight_decay'], 
         "lr_scheduler": config['train']['lr_scheduler']['name'],
+        "owner" : user_name #누가 돌렸는 지 정보 추가 
     }
-
+    
     # wandb initialize 
     try:
-        wandb.init(project=project_name, entity=team_name, config=wandb_config)
+        wandb.init(project=project_name, entity=team_name, config=wandb_config,  name=run_name)
     except Exception as e:
         print(f"Error during W&B initialization: {e}")
 
-def log_metrics(epoch: int, train_loss: float, val_loss: float, val_metric: float) -> None:
-    
+def log_metrics(epoch: int, train_loss: float, val_loss: float = None, val_metric: float = None) -> None:
+
+    metrics = {
+        "epoch": epoch,
+        "train_loss": train_loss
+    }
+    if val_loss is not None:
+        metrics["val_loss"] = val_loss
+    if val_metric is not None:
+        metrics["val_metric"] = val_metric
     try:
-        wandb.log({
-            "epoch": epoch,
-            "train_loss": train_loss,
-            "val_loss": val_loss,
-            "val_metric": val_metric
-        })
+        wandb.log(metrics)
     except Exception as e:
         print(f"Error recording W&B logs: {e}")
-
 
 def finish_wandb():
     try:

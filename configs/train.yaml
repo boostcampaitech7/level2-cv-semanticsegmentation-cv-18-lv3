@@ -1,38 +1,48 @@
 train:
   batch_size: 4
-  num_epochs: 100
+  num_epochs: 10
   n_splits: 5
   threshold: 0.5
-  
    
-  metric: "dice_coef"
+  metric: 
+    name: "dice_coef"
   # accuracy / f1 / precision / recall / mse / dice_coef
-  
-  criterion: "BCEWithLogitsLoss"
-  # CrossEntropyLoss / BCEWithLogitsLoss
+
+  # 이미 학습한 모델의 ckpt를 가지고 재학습 할 것인지 
+  resume: False
+  #어떤 ckpt로부터 재학습할 것인지
+  ckpt_path : ""
+
+  criterion: 
+    name: "bce+dice"
+  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice
 
   optimizer:
     name: "Adam"
     # Adam / SGD
-    weight_decay: 1.e-6
-    momentum: 0.9
-    learning_rate: 1.e-4
+    config:
+      weight_decay: 1.e-6
+      # momentum: 0.9
+      lr: 1.e-4
 
   lr_scheduler:
     name: "ReduceLROnPlateau"
-    factor: 0.1
-    patience: 2
-    min_lr: 1.e-6
-    monitor: 'metric'
+    monitor: "metric"
+    config:
+      factor: 0.1
+      patience: 20
+      min_lr: 1.e-6
+      verbose: True
 
   early_stopping:
-    patience: 3
+    patience: 5
     min_delta: 0.001
     evidence: 'loss'
     monitor: 'metric'
 
 model:
   name: "fcn_50"
-  # fcn_50 / 
-  pretrained: True
+  # fcn_50 /
+  config:
+    pretrained: True
   

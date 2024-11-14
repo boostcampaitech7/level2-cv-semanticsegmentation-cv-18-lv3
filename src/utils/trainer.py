@@ -8,12 +8,12 @@ from torch.utils.data import DataLoader
 from typing import Any, Dict, Tuple
 
 # save model function 
-def save_model(model, save_dir: str, file_name: str = "best_model.pth"):
+def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth"):
     os.makedirs(save_dir, exist_ok=True)
     output_path = os.path.join(save_dir, file_name)
-    torch.save(model.state_dict(), output_path)
+    torch.save(state, output_path)
     print(f"Model saved to {output_path}")
-
+    
 def train_one_epoch(
                 model: nn.Module,
                 dataloader: DataLoader,
@@ -65,7 +65,6 @@ def validate(
             inputs, labels = batch
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
-
             logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
             logits_h, logits_w = logits.size(-2), logits.size(-1)

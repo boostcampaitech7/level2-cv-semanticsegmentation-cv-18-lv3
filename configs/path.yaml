@@ -1,5 +1,4 @@
 paths:
-  save_dir: "./outputs/saved_models"
   output_dir: "./outputs/"
 
   train_image_root: "./data/train/DCM"

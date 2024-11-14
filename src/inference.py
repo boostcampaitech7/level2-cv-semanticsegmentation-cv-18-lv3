@@ -18,17 +18,20 @@ def run(config):
     classes = config['classes']
     CLASS2IND = {v: i for i, v in enumerate(classes)}
     IND2CLASS = {v: k for k, v in CLASS2IND.items()}
-    
+    output_dir = os.path.join(config['paths']['output_dir'],'output.csv')
     device = torch.device(config['device'])
 
-    model = get_model(config).to(device)
+    model = get_model(config['model'], classes).to(device)
     
     test_loader = get_inference_loaders(config)
 
     model_name = config['model']['name']
-    model_path = os.path.join(config['paths']['save_dir'], f"{model_name}_best_model.pth")
+    model_path = os.path.join(config['paths']['output_dir'], f"{model_name}_best_model.pth")
     
-    model.load_state_dict(torch.load(model_path, map_location='cpu'))
+    pth_ = torch.load(model_path, map_location='cpu')
+    pth_ = pth_['model_state_dict'] if isinstance(pth_, dict) and 'model_state_dict' in pth_.keys() else pth_
+    
+    model.load_state_dict(pth_)
     model.to(device)
     model.eval()
 
@@ -38,7 +41,9 @@ def run(config):
         for step, (images, image_names) in tqdm(enumerate(test_loader), total=len(test_loader)):
             images = images.to(device)
 
-            outputs = model(images)['out']
+                
+            outputs = model(images)
+            outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
             outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear")
             outputs = torch.sigmoid(outputs)
             outputs = (outputs > threshold).detach().cpu().numpy()
@@ -56,4 +61,5 @@ def run(config):
         "class": classes,
         "rle": rles,
     })
-    df.to_csv("output.csv", index=False)
+    
+    df.to_csv(output_dir, index=False)

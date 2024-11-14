@@ -6,17 +6,19 @@ from torch.utils.data import Dataset, DataLoader, Subset
 from typing import Any
 import albumentations as A
 from src.datasets.dataset import XRayDataset
+from src.utils.augmentation import get_transform, load_config # get_augmentation 함수 가져오기
 
 def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
 
-    tf = A.Resize(512, 512) #추후 Augmentation 영역으로 빼야함
+    train_transforms = get_transform(config['data'], is_train=True)
+    val_transforms = get_transform(config['data'], is_train=False)
 
     train_dataset = XRayDataset(
         image_root=config['paths']['train_image_root'],
         label_root=config['paths']['train_label_root'],
         classes=config['classes'],
         mode='train',
-        transforms=tf
+        transforms=train_transforms
     )
     
     val_dataset = XRayDataset(
@@ -24,7 +26,7 @@ def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
         label_root=config['paths']['train_label_root'],
         classes=config['classes'],
         mode='val',
-        transforms=tf
+        transforms=val_transforms
     )
 
     train_loader = DataLoader(
@@ -47,21 +49,22 @@ def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
 
 def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
     
-    tf = A.Resize(512, 512)
+    inference_transforms = get_transform(config['data'], is_train=False)
     
     inference_dataset = XRayDataset(
         image_root=config['paths']['inference_image_root'],
         label_root=config['paths']['inference_label_root'],
         classes=config['classes'],
-        mode='test',
-        transforms=tf
+        mode='inference',
+        transforms=inference_transforms
+
     )
     
     inference_loader = DataLoader(
         inference_dataset,
         batch_size=config['data']['inference']['batch_size'],
         shuffle=False,
-        num_workers=config['data']['infernece']['num_workers'],
+        num_workers=config['data']['inference']['num_workers'],
         drop_last=False
     )
     

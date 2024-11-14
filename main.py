@@ -1,7 +1,6 @@
 import yaml
 from pathlib import Path
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 import random
 import numpy as np
 import glob
@@ -9,6 +8,11 @@ import argparse
 import os
 from src import train
 from src import inference 
+from datetime import datetime
+import shutil
+from typing import Any, Dict
+
+from etc.dev.dev_utils import dev_paths_setting
 
 def set_random_seed(seed):
     torch.manual_seed(seed)
@@ -37,23 +41,59 @@ def get_config(config_folder):
 
     return config
 
+def save_config(config: Dict[str, Any], output_dir: str, mode: str='train') -> None:
+    if mode == 'dev_train':
+        timestamp = 'dev'
+    else:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    folder_name = f"{timestamp}_{config['model']['name']}_{config['developer']}"
+    folder_path = os.path.join(output_dir, folder_name)
+    
+    os.makedirs(folder_path, exist_ok=True)
+    
+    output_path = os.path.join(folder_path, 'config.yaml')
+    
+    config['paths']['output_dir'] = folder_path
+    
+    with open(output_path, 'w') as file:
+        yaml.dump(config, file)
+    
+    print(f"Config file saved to {output_path}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
-    parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
-    args = parser.parse_args()
+    is_debug = False
+    
+    if is_debug:
+        config_folder = "outputs/dev_smp_unet_kh"
+        mode = 'dev_train'
+    else:
+        parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
+        parser.add_argument('--mode', required=True, help="Select mode(train/inference/dev_train/dev_inference)")
+        parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
+        args = parser.parse_args()
 
-    config_folder = args.config_folder
+        config_folder = args.config_folder
+        mode = args.mode
 
     config = get_config(config_folder)
-
     set_random_seed(config['random_seed'])
-    mode = config['mode']
 
     if mode == 'train':
+        save_config(config, config['paths']['output_dir'])
         train.run(config)
+        
     elif mode == 'inference':
         inference.run(config)
-
+        
+    elif mode == 'dev_train':
+        dev_paths_setting(config['paths'])
+        save_config(config, config['paths']['output_dir'], mode)
+        train.run(config)
+        
+    elif mode == 'dev_inference':
+        dev_paths_setting(config['paths'])
+        inference.run(config)
+        
     else:
         raise ValueError(f"Invalid mode: {mode}")
