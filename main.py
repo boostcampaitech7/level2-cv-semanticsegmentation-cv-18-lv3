@@ -61,7 +61,7 @@ if __name__ == "__main__":
     # args = parser.parse_args()
 
     # config_folder = args.config_folder
-    config_folder = "configs"
+    config_folder = "./configs"
 
     config = get_config(config_folder)
 

@@ -24,7 +24,8 @@ class DecoderBlock(nn.Module):
 
 
     def forward(self, x, skip=None):
-        x = F.interpolate(x, scale_factor=2, mode="nearest")
+        if x.shape[-1] != skip.shape[-1]:
+            x = F.interpolate(x, scale_factor=2, mode="nearest")
         # scale_factor가 2일 때 size가 2배가 되는 듯 함 
         
         if skip is not None:
@@ -57,10 +58,10 @@ class UNetResNet34(nn.Module):
     def forward(self, x):
         x1, x2, x3, x4, x5 = self.encoder(x)
 
-        d4 = self.decoder4(x5, x4)  # 32x32x512 -> 64x64x256
-        d3 = self.decoder3(d4, x3)  # 64x64x256 -> 128x128x128
-        d2 = self.decoder2(d3, x2)  # 128x128x128 -> 256x256x64 
-        d1 = self.decoder1(d2, x1)  # 256x256x64 -> 512x512xnum_classes
+        d4 = self.decoder4(x5, x4)  # d4 : 128x128x256
+        d3 = self.decoder3(d4, x3)  # d3 : 256x256x128
+        d2 = self.decoder2(d3, x2)  # d2 : 512x512x64
+        d1 = self.decoder1(d2, x1)  # d1 : 512x512x64
 
         # 최종 출력
         return self.final_conv(d1)

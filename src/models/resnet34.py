@@ -71,22 +71,22 @@ class ResNet34(nn.Module):
         #이건 왜 3x3인지 모름, 위 블로그 참고함 아무튼 여기까지 거쳤으면
         # 초기 512x512x3 이미지가 128x128x64까지 온 상태
        
-        self.layer1 = LayerBlock(64, 64, 3, 1) #256x256x64
-        self.layer2 = LayerBlock(64, 128, 3, 2) #128x128x128
-        self.layer3 = LayerBlock(128, 256, 3, 2) #64x64x256
-        self.layer4 = LayerBlock(256, 512, 3, 2) #32x32x512
+        self.layer1 = LayerBlock(64, 64, 3, 1) 
+        self.layer2 = LayerBlock(64, 128, 3, 2) 
+        self.layer3 = LayerBlock(128, 256, 3, 2) 
+        self.layer4 = LayerBlock(256, 512, 3, 2) 
         
     def forward(self, x):
         
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x1 = self.maxpool(x)
+        x1 = self.maxpool(x) # x1 : 512x512x64
 
-        x2 = self.layer1(x1)
-        x3 = self.layer2(x2)
-        x4 = self.layer3(x3)
-        x5 = self.layer4(x4)
+        x2 = self.layer1(x1) # x2 : 512x512x64
+        x3 = self.layer2(x2) # x3 : 256x256x128
+        x4 = self.layer3(x3) # x4 : 128x128x256
+        x5 = self.layer4(x4) # x5 : 64x64x512
         
         return x1, x2, x3, x4, x5
     
