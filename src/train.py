@@ -55,12 +55,16 @@ def run(config: Dict[str, Any]) -> float:
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
         print(f"Train Loss: {train_loss:.4f}")
         
+
+        # 현재 학습률 가져오기 
+        current_lr = optimizer.param_groups[0]['lr']
+
         if (epoch+1) % val_step == 0:
             val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
             print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
             
             #val_step 마다 wandb에 기록 
-            log_metrics(epoch, train_loss, val_loss, val_metric)
+            log_metrics(epoch, train_loss, current_lr, val_loss, val_metric)
         else:
             #val_step 이 아닌 경우에는 train_loss 만 기록
             log_metrics(epoch, train_loss) 

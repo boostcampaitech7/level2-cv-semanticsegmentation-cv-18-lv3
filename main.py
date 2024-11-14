@@ -71,12 +71,23 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
         parser.add_argument('--mode', required=True, help="Select mode(train/inference/dev_train/dev_inference)")
         parser.add_argument('--config-folder', required=True, help="Path to config folder containing YAML files")
+        parser.add_argument('--exp', required=False, help='Describe your experiment')
         args = parser.parse_args()
+
 
         config_folder = args.config_folder
         mode = args.mode
+        experiments = args.exp
 
     config = get_config(config_folder)
+   
+    # 어떤 실험을 진행중인지 표기 
+    if args.exp:
+        config['train']['experiment'] = args.exp
+    else:
+        config['train']['experiment'] = ""
+
+
     set_random_seed(config['random_seed'])
 
     if mode == 'train':
