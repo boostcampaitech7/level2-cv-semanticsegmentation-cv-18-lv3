@@ -41,7 +41,9 @@ train:
     monitor: 'metric'
 
 model:
+  #name: "myUnet"
   name: "fcn_50"
+
   # fcn_50 /
   config:
     pretrained: True

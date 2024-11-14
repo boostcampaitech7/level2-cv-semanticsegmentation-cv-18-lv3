@@ -3,7 +3,7 @@ random_seed: 42
 device: "cuda"
 # cuda / cpu
 
-developer: "kh"
+developer: "hg"
 
 classes:  [
     'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
@@ -14,5 +14,5 @@ classes:  [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
 
 wandb:
-  user_name: "" #본인 id 적기
+  user_name: "hg" #본인 id 적기
   team_name: "dkvltmxhf-hotclip"

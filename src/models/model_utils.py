@@ -6,7 +6,7 @@ from torchvision import models
 from typing import Any, Dict, Optional
 import segmentation_models_pytorch as smp
 import torch.nn.functional as F
-
+from .unet import UNetResNet34 
 
 def calc_loss_bce_dice(pred, target, bce_weight=0.5):
     bce = F.binary_cross_entropy_with_logits(pred, target)
@@ -92,6 +92,8 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
             
         else:
             raise ValueError(f"Unknown model: {model_name}")
+    elif model_name == "myUnet":
+        model = UNetResNet34()
     else:
         raise ValueError(f"Unkown model: {model_name}")
 
