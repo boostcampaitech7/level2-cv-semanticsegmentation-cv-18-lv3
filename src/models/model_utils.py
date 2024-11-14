@@ -27,7 +27,8 @@ def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
         'CrossEntropyLoss': nn.CrossEntropyLoss(),
         'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(),
-        'bce+dice': calc_loss_bce_dice
+        'bce+dice': calc_loss_bce_dice,
+        'dice' : dice_loss
     }
     if criterion_name in criterions:
         return criterions[criterion_name]
