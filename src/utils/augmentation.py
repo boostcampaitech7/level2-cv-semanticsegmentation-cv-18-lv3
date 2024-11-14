@@ -19,7 +19,8 @@ def get_transform(aug_config, is_train=True):
     aug_ops = []
 
     if is_train:
-        for aug_name, aug_params in aug_config['train']['augmentation'].items():
+        train_aug_config = aug_config['train'].get('augmentation', {})
+        for aug_name, aug_params in train_aug_config.items():
             aug_ops.append(aug_list[aug_name](**aug_params))
 
     for aug_name, aug_params in aug_config['base_augmentation'].items():
