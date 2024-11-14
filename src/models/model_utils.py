@@ -44,6 +44,8 @@ def get_optimizer(optimizer_config : Dict[str, Any], parameters) -> optim.Optimi
     elif optimizer_name == 'SGD':
         # lr, momentum, weight_decay
         optimizer = optim.SGD(parameters, **optimizer_config['config'])
+    elif optimizer_name == 'AdamW':
+        optimizer = optim.AdamW(parameters, **optimizer_config['config'])
     else:
         raise ValueError(f"Unknown optimizer: {optimizer_name}")
 
