@@ -62,11 +62,11 @@ def save_config(config: Dict[str, Any], output_dir: str, mode: str='train') -> N
     print(f"Config file saved to {output_path}")
 
 if __name__ == "__main__":
-    is_debug = True
+    is_debug = False
     
     if is_debug:
         config_folder = "outputs/dev_smp_unet_kh"
-        mode = 'dev_inference'
+        mode = 'dev_train'
     else:
         parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
         parser.add_argument('--mode', required=True, help="Select mode(train/inference/dev_train/dev_inference)")
