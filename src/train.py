@@ -10,7 +10,7 @@ from src.utils.trainer import train_one_epoch, validate, save_model
 from src.datasets.dataloader import get_data_loaders
 from src.utils.metrics import get_metric_function
 from src.models.model_utils import *
-from src.utils.wandb_logger import init_wandb, log_metrics, finish_wandb, WandbLogger
+from src.utils.wandb_logger import WandbLogger
 from typing import Any, Dict
 
 
