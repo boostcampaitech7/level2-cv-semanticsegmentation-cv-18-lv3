@@ -1,5 +1,4 @@
 train:
-  batch_size: 4
   num_epochs: 100
   n_splits: 5
   threshold: 0.5
@@ -14,8 +13,8 @@ train:
   ckpt_path : ""
 
   criterion: 
-    name: "StructureLoss"
-  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice / StructureLoss(for SAM2-UNET)
+    name: "bce+dice"
+  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice / dice / StructureLoss(for SAM2-UNET)
 
   optimizer:
     name: "Adam"
@@ -41,7 +40,8 @@ train:
     monitor: 'metric'
 
 model:
-  name: "fcn_50"
+  #name: "myUnet"
+  name: "smp_unet"
 
   # fcn_50 /
   config:

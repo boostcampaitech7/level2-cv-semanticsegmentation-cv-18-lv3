@@ -49,6 +49,7 @@ def get_criterion(criterion_name: str) -> nn.Module:
         'CrossEntropyLoss': nn.CrossEntropyLoss(),
         'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(),
         'bce+dice': calc_loss_bce_dice,
+        'dice' : dice_loss,
         'StructureLoss' : multiscale_structure_loss
     }
     if criterion_name in criterions:
@@ -65,6 +66,8 @@ def get_optimizer(optimizer_config : Dict[str, Any], parameters) -> optim.Optimi
     elif optimizer_name == 'SGD':
         # lr, momentum, weight_decay
         optimizer = optim.SGD(parameters, **optimizer_config['config'])
+    elif optimizer_name == 'AdamW':
+        optimizer = optim.AdamW(parameters, **optimizer_config['config'])
     else:
         raise ValueError(f"Unknown optimizer: {optimizer_name}")
 
