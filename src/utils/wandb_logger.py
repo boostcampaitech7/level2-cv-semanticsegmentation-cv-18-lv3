@@ -50,3 +50,14 @@ def finish_wandb():
         wandb.finish()
     except Exception as e:
         print(f"Error during wandb finish: {e}")
+        
+        
+class WandbLogger():
+    def __init__(self) -> None:
+        pass
+
+    def log_metrics(self) -> None:
+        pass
+    
+    def finish_wandb():
+        pas

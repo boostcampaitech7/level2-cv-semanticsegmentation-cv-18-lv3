@@ -18,7 +18,8 @@ def run(config: Dict[str, Any]) -> float:
     model_name = config['model']['name']
     threshold = config['train']['threshold']
 
-    init_wandb(config)
+    if 'wandb' in config.keys():
+        init_wandb(config)
 
     device = torch.device(config['device'])
     model = get_model(config['model'], config['classes']).to(device)
