@@ -10,7 +10,7 @@ from src.utils.trainer import train_one_epoch, validate, save_model
 from src.datasets.dataloader import get_data_loaders
 from src.utils.metrics import get_metric_function
 from src.models.model_utils import *
-from src.utils.wandb_logger import init_wandb, log_metrics, finish_wandb
+from src.utils.wandb_logger import WandbLogger
 from typing import Any, Dict
 
 
@@ -18,8 +18,7 @@ def run(config: Dict[str, Any]) -> float:
     model_name = config['model']['name']
     threshold = config['train']['threshold']
 
-    if 'wandb' in config.keys():
-        init_wandb(config)
+    wandb = WandbLogger(config)
 
     device = torch.device(config['device'])
     model = get_model(config['model'], config['classes']).to(device)
@@ -56,15 +55,18 @@ def run(config: Dict[str, Any]) -> float:
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
         print(f"Train Loss: {train_loss:.4f}")
         
+        # 현재 학습률 가져오기 
+        current_lr = optimizer.param_groups[0]['lr']
+        
         if (epoch+1) % val_step == 0:
             val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
             print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
             
             #val_step 마다 wandb에 기록 
-            log_metrics(epoch, train_loss, val_loss, val_metric)
+            wandb.log_metrics(epoch, train_loss, current_lr, val_loss, val_metric)
         else:
             #val_step 이 아닌 경우에는 train_loss 만 기록
-            log_metrics(epoch, train_loss) 
+            wandb.log_metrics(epoch, train_loss, current_lr) 
 
         if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             if config['train']['lr_scheduler']['monitor'] == 'loss':
@@ -93,5 +95,5 @@ def run(config: Dict[str, Any]) -> float:
             print(f"Early stopping triggered after {epoch+1} epochs")
             break
     
-    finish_wandb()
+    wandb.finish_wandb()
     return best_val_metric
