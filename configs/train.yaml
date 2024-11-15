@@ -1,5 +1,5 @@
 train:
-  num_epochs: 100
+  num_epochs: 10
   n_splits: 5
   threshold: 0.5
    
@@ -13,7 +13,7 @@ train:
   ckpt_path : ""
 
   criterion: 
-    name: "bce+dice"
+    name: "StructureLoss"
   # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice / dice / StructureLoss(for SAM2-UNET)
 
   optimizer:
@@ -29,7 +29,7 @@ train:
     monitor: "metric"
     config:
       factor: 0.1
-      patience: 15
+      patience: 20
       min_lr: 1.e-6
       verbose: True
 
@@ -41,7 +41,7 @@ train:
 
 model:
   #name: "myUnet"
-  name: "smp_unet"
+  name: "sam2unet_tiny"
 
   # fcn_50 /
   config:
