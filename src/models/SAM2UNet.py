@@ -122,7 +122,7 @@ class RFB_modified(nn.Module):
 
 
 class SAM2UNet(nn.Module):
-    def __init__(self, model_size = 'large', checkpoint_path=None) -> None:
+    def __init__(self, model_size='large', checkpoint_path=None) -> None:
         super(SAM2UNet, self).__init__()    
 
         ### 

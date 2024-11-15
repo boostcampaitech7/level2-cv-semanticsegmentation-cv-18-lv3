@@ -140,7 +140,7 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
             except subprocess.CalledProcessError as e :
                 raise RuntimeError(f"Failed to download the hiera file from {download_url}. Error: {e}")
 
-        model = SAM2UNet(hiera_path, model_size)
+        model = SAM2UNet(model_size, hiera_path)
 
     else:
         raise ValueError(f"Unkown model: {model_name}")
