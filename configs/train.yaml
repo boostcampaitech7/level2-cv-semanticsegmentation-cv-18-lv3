@@ -1,6 +1,6 @@
 train:
   batch_size: 4
-  num_epochs: 10
+  num_epochs: 100
   n_splits: 5
   threshold: 0.5
    
@@ -14,8 +14,8 @@ train:
   ckpt_path : ""
 
   criterion: 
-    name: "bce+dice"
-  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice
+    name: "dice"
+  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice / dice
 
   optimizer:
     name: "Adam"
@@ -42,7 +42,7 @@ train:
 
 model:
   #name: "myUnet"
-  name: "fcn_50"
+  name: "smp_unet"
 
   # fcn_50 /
   config:
