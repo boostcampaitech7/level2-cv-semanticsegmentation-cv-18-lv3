@@ -74,12 +74,13 @@ if __name__ == "__main__":
         parser.add_argument('-cf', '--config-folder', required=True, help="Path to config folder containing YAML files")
         parser.add_argument('-d', '--dev', help="dev mode on off", action='store_true')
         args = parser.parse_args()
-
+        
         config_folder = args.config_folder
         mode = args.mode
         dev = args.dev
    
     config = get_config(config_folder)
+
     set_random_seed(config['random_seed'])
     
     # dev 환경설정

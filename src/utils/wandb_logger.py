@@ -17,10 +17,10 @@ class WandbLogger():
         model_name = config['model']['name']
         user_name = config['wandb']['user_name']
         team_name = config['wandb']['team_name']
-
+        experiment = config['wandb']['experiment']
         project_name = f"dev_{config['developer']}" if user_name == 'dev' else f"{model_name}"
         
-        run_name = f"{model_name}_{user_name}_{current_date}"
+        run_name = f"{model_name}_{user_name}_{experiment}_{current_date}"
         
         # wandb config 
         wandb_config = {
@@ -30,6 +30,7 @@ class WandbLogger():
             "optimizer": config['train']['optimizer']['name'],
             "weight_decay": config['train']['optimizer']['config']['weight_decay'],
             "lr_scheduler": config['train']['lr_scheduler']['name'],
+            "learning_rate": config['train']['optimizer']['config']['lr'], 
             "owner" : user_name #누가 돌렸는 지 정보 추가
         }
         
@@ -39,11 +40,12 @@ class WandbLogger():
         except Exception as e:
             print(f"Error during W&B initialization: {e}")
 
-    def log_metrics(self, epoch: int, train_loss: float, val_loss: float = None, val_metric: float = None) -> None:
+    def log_metrics(self, epoch: int, train_loss: float, learning_rate : float = None, val_loss: float = None, val_metric: float = None) -> None:
         if self.wandb_status:
             metrics = {
                 "epoch": epoch,
-                "train_loss": train_loss
+                "train_loss": train_loss,
+                "learning_rate" : learning_rate
             }
             if val_loss is not None:
                 metrics["val_loss"] = val_loss

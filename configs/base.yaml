@@ -16,5 +16,7 @@ classes:  [
 # wandb 사용을 원치 않으신다면 아래 wandb 부분을 다 주석 처리해주세요.
 wandb:
   user_name: "kh" #본인 id 적기
-  team_name: "dkvltmxhf-hotclip"
+  team_name: "dkvltmxhf-hotclip" # wandb 프로젝트 명, 변경 x
+  experiment: "" # 무슨 실험인지
+  
   
