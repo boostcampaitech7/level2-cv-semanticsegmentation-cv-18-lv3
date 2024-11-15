@@ -25,7 +25,7 @@ class WandbLogger():
         # wandb config 
         wandb_config = {
             "model_name": config['model']['name'],
-            "batch_size": config['train']['batch_size'],
+            "batch_size": config['data']['train']['batch_size'],
             "learning_rate": config['train']['optimizer']['config']['lr'],
             "optimizer": config['train']['optimizer']['name'],
             "weight_decay": config['train']['optimizer']['config']['weight_decay'],

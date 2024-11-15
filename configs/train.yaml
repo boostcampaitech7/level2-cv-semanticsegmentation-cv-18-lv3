@@ -1,5 +1,4 @@
 train:
-  batch_size: 4
   num_epochs: 100
   n_splits: 5
   threshold: 0.5
@@ -12,9 +11,6 @@ train:
   resume: False
   #어떤 ckpt로부터 재학습할 것인지
   ckpt_path : ""
-
-  #어떤 실험을 진행 중인지
-  experiment: ""
 
   criterion: 
     name: "dice"
