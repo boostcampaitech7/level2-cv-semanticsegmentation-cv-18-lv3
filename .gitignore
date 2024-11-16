@@ -12,7 +12,7 @@ wandb/*
 outputs/*.csv
 
 # pretrained models
-sam_pretrained_models/
+sam_pretrained/
 
 __pycache__/
 *.py[cod]
