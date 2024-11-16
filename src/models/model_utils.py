@@ -24,7 +24,22 @@ def dice_loss(pred, target, smooth = 1.):
     intersection = (pred * target).sum(dim=2).sum(dim=2)
     loss = (1 - ((2. * intersection + smooth) / (pred.sum(dim=2).sum(dim=2) +   target.sum(dim=2).sum(dim=2) + smooth)))
     return loss.mean()
+
+def focal_loss(inputs, targets, alpha=.25, gamma=2) : 
+    BCE = F.binary_cross_entropy_with_logits(inputs, targets)
+    BCE_EXP = torch.exp(-BCE)
+    loss = alpha * (1-BCE_EXP)**gamma * BCE
+    return loss
+
+def focal_dice_loss(pred=None, target=None, focal_weight = 0.5):
+    focal = focal_loss(pred, target)
+    pred = F.sigmoid(pred)
+    dice = dice_loss(pred, target)
+    loss = focal * focal_weight + dice * (1 - focal_weight)
+    return loss
+
     
+
 def structure_loss(pred, target):
     weit = 1 + 5 * torch.abs(F.avg_pool2d(target, kernel_size=31, stride=1, padding=15) - target)
     wbce = F.binary_cross_entropy_with_logits(pred, target, reduction='none')
@@ -50,7 +65,8 @@ def get_criterion(criterion_name: str) -> nn.Module:
         'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(),
         'bce+dice': calc_loss_bce_dice,
         'dice' : dice_loss,
-        'StructureLoss' : multiscale_structure_loss
+        'StructureLoss' : multiscale_structure_loss,
+        'focal+dice' : focal_dice_loss 
     }
     if criterion_name in criterions:
         return criterions[criterion_name]
@@ -113,6 +129,8 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
         model_name = model_name.split('_')[1]
         if model_name == 'unet':
             model = smp.Unet('resnet34', encoder_weights="imagenet", classes=num_classes)
+        elif model_name == 'unet++':
+            model = smp.UnetPlusPlus('resnet152', encoder_weights="imagenet", classes=num_classes)
         else:
             raise ValueError(f"Unknown model: {model_name}")
     elif model_name == "myUnet":
