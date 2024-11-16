@@ -87,16 +87,18 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
     elif model_name == 'deeplabv3_101':
         model = models.segmentation.deeplabv3_resnet101(**model_config['config'])
         model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
+    elif model_name == "myUnet":
+        model = UNetResNet34()
+        
     elif 'smp_' in model_name:
         model_name = model_name.split('_')[1]
         
         if model_name == 'unet':
             model = smp.Unet('resnet34', encoder_weights="imagenet", classes=num_classes)
-            
+        elif model_name == 'maxvit':
+            model = smp.Unet("tu-maxvit_tiny_tf_512",  encoder_weights="imagenet", in_channels=3, classes=29)
         else:
             raise ValueError(f"Unknown model: {model_name}")
-    elif model_name == "myUnet":
-        model = UNetResNet34()
     else:
         raise ValueError(f"Unkown model: {model_name}")
 
