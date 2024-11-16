@@ -1,4 +1,6 @@
-import timm
+import os
+import subprocess
+import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.optim as optim
@@ -7,6 +9,7 @@ from typing import Any, Dict, Optional
 import segmentation_models_pytorch as smp
 import torch.nn.functional as F
 from .unet import UNetResNet34 
+from .SAM2UNet import SAM2UNet
 
 def calc_loss_bce_dice(pred, target, bce_weight=0.5):
     bce = F.binary_cross_entropy_with_logits(pred, target)
@@ -21,14 +24,49 @@ def dice_loss(pred, target, smooth = 1.):
     intersection = (pred * target).sum(dim=2).sum(dim=2)
     loss = (1 - ((2. * intersection + smooth) / (pred.sum(dim=2).sum(dim=2) +   target.sum(dim=2).sum(dim=2) + smooth)))
     return loss.mean()
+
+def focal_loss(inputs, targets, alpha=.25, gamma=2) : 
+    BCE = F.binary_cross_entropy_with_logits(inputs, targets)
+    BCE_EXP = torch.exp(-BCE)
+    loss = alpha * (1-BCE_EXP)**gamma * BCE
+    return loss
+
+def focal_dice_loss(pred=None, target=None, focal_weight = 0.5):
+    focal = focal_loss(pred, target)
+    pred = F.sigmoid(pred)
+    dice = dice_loss(pred, target)
+    loss = focal * focal_weight + dice * (1 - focal_weight)
+    return loss
+
     
+
+def structure_loss(pred, target):
+    weit = 1 + 5 * torch.abs(F.avg_pool2d(target, kernel_size=31, stride=1, padding=15) - target)
+    wbce = F.binary_cross_entropy_with_logits(pred, target, reduction='none')
+    wbce = (weit * wbce).sum(dim=(2, 3)) / weit.sum(dim=(2, 3))
+    pred = torch.sigmoid(pred)
+    inter = ((pred * target) * weit).sum(dim=(2, 3))
+    union = ((pred + target) * weit).sum(dim=(2, 3))
+    wiou = 1 - (inter + 1) / (union - inter + 1)
+    return (wbce + wiou).mean()
+
+def multiscale_structure_loss(pred, target):
+    loss = 0
+    pred0, pred1, pred2 = pred
+    loss0 = structure_loss(pred0, target)
+    loss1 = structure_loss(pred1, target)
+    loss2 = structure_loss(pred2, target)
+    loss = loss0 + loss1 + loss2
+    return loss
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
         'CrossEntropyLoss': nn.CrossEntropyLoss(),
         'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(),
         'bce+dice': calc_loss_bce_dice,
-        'dice' : dice_loss
+        'dice' : dice_loss,
+        'StructureLoss' : multiscale_structure_loss,
+        'focal+dice' : focal_dice_loss 
     }
     if criterion_name in criterions:
         return criterions[criterion_name]
@@ -92,13 +130,43 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
         
     elif 'smp_' in model_name:
         model_name = model_name.split('_')[1]
-        
         if model_name == 'unet':
             model = smp.Unet('resnet34', encoder_weights="imagenet", classes=num_classes)
         elif model_name == 'maxvit':
             model = smp.Unet("tu-maxvit_tiny_tf_512",  encoder_weights="imagenet", in_channels=3, classes=29)
+        elif model_name == 'unet++':
+            model = smp.UnetPlusPlus('resnet152', encoder_weights="imagenet", classes=num_classes)
         else:
             raise ValueError(f"Unknown model: {model_name}")
+    elif model_name == "myUnet":
+        model = UNetResNet34()
+
+    elif 'sam2unet_' in model_name :
+        model_size = model_name.split('_')[1]
+        hiera_dir = './pretrained_models'
+        if model_size == 'tiny' :
+            hiera_file = 'sam2_hiera_tiny.pt'
+            download_url = 'https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_tiny.pt'
+        elif model_size == 'base' :
+            hiera_file = 'sam2_hiera_base+.pt'
+            download_url = 'https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_base_plus.pt'
+        elif model_size == 'large' :
+            hiera_file = 'sam2_hiera_large.pt'
+            download_url = 'https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_large.pt'
+        else :
+            raise ValueError(f"Unknown model: {model_name}")
+        
+        os.makedirs(hiera_dir, exist_ok=True)
+        hiera_path = os.path.join(hiera_dir, hiera_file)
+
+        if not os.path.exists(hiera_path) :
+            print(f"Hiera file not found at {hiera_path}. Downloading from {download_url}...")
+            try:
+                subprocess.run(['wget', '-O', hiera_path, download_url], check=True)
+            except subprocess.CalledProcessError as e :
+                raise RuntimeError(f"Failed to download the hiera file from {download_url}. Error: {e}")
+
+        model = SAM2UNet(model_size, hiera_path)
     else:
         raise ValueError(f"Unkown model: {model_name}")
 

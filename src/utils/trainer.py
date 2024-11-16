@@ -26,8 +26,8 @@ def train_one_epoch(
     total_loss = 0
 
     for batch in tqdm(dataloader, desc="Training"):
-        inputs, labels = batch
-        inputs, labels = inputs.to(device), labels.to(device)
+        inputs, masks = batch
+        inputs, masks = inputs.to(device), masks.to(device)
 
         optimizer.zero_grad()
         outputs = model(inputs)
@@ -35,7 +35,7 @@ def train_one_epoch(
          # 모델 출력이 딕셔너리인 경우 처리
         logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
-        loss = criterion(logits, labels)
+        loss = criterion(logits, masks)
         loss.backward()
         optimizer.step()
 
@@ -62,26 +62,40 @@ def validate(
     dices = []
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Validating"):
-            inputs, labels = batch
-            inputs, labels = inputs.to(device), labels.to(device)
+            inputs, masks = batch
+            inputs, masks = inputs.to(device), masks.to(device)
             outputs = model(inputs)
-            logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+
+            if isinstance(outputs, tuple) :
+                logits, logits1, logits2 = outputs
+                use_multiple_outputs = True
+            else : 
+                logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                use_multiple_outputs = False
 
             logits_h, logits_w = logits.size(-2), logits.size(-1)
-            labels_h, labels_w = labels.size(-2), labels.size(-1)
+            labels_h, labels_w = masks.size(-2), masks.size(-1)
 
             #출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
             if logits_h != labels_h or logits_w != labels_w:
                 logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+                if use_multiple_outputs:
+                    logits1 = F.interpolate(logits1, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+                    logits2 = F.interpolate(logits2, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+
+            if use_multiple_outputs:
+                loss = criterion((logits, logits1, logits2), masks)
+            else:
+                loss = criterion(logits, masks)
             
-            loss = criterion(logits, labels)
             total_loss += loss.item()
 
             probs = torch.sigmoid(logits)
             # threshold 추가해서 기준 치 이상만 label로 분류 
-            outputs = (probs > threshold).detach().cpu()
-            masks = labels.detach().cpu()
-            dice = metric_fn.calculate(outputs, masks)
+            # outputs = (probs > threshold).detach().cpu()
+            # masks = masks.detach().cpu()
+            outputs = (probs > threshold)
+            dice = metric_fn.calculate(outputs, masks).detach().cpu()
             dices.append(dice)
 
     epoch_loss = total_loss / len(dataloader)
