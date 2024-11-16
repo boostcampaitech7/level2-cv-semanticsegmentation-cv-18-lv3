@@ -37,7 +37,6 @@ data:
   val:
     batch_size: 4  
     num_workers: 4
-    val_step: 1
 
   inference:
     batch_size: 2
