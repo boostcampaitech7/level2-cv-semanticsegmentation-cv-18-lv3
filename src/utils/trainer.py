@@ -65,7 +65,13 @@ def validate(
             inputs, masks = batch
             inputs, masks = inputs.to(device), masks.to(device)
             outputs = model(inputs)
-            logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+
+            if isinstance(outputs, tuple) :
+                logits, logits1, logits2 = outputs
+                use_multiple_outputs = True
+            else : 
+                logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                use_multiple_outputs = False
 
             logits_h, logits_w = logits.size(-2), logits.size(-1)
             labels_h, labels_w = masks.size(-2), masks.size(-1)
@@ -73,8 +79,15 @@ def validate(
             #출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
             if logits_h != labels_h or logits_w != labels_w:
                 logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+                if use_multiple_outputs:
+                    logits1 = F.interpolate(logits1, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+                    logits2 = F.interpolate(logits2, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+
+            if use_multiple_outputs:
+                loss = criterion((logits, logits1, logits2), masks)
+            else:
+                loss = criterion(logits, masks)
             
-            loss = criterion(logits, masks)
             total_loss += loss.item()
 
             probs = torch.sigmoid(logits)
