@@ -113,6 +113,8 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
         model_name = model_name.split('_')[1]
         if model_name == 'unet':
             model = smp.Unet('resnet34', encoder_weights="imagenet", classes=num_classes)
+        elif model_name == 'unet++':
+            model = smp.UnetPlusPlus('resnet34', classes=num_classes)
         else:
             raise ValueError(f"Unknown model: {model_name}")
     elif model_name == "myUnet":
