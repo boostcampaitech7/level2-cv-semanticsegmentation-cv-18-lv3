@@ -1,18 +1,20 @@
 import wandb
 import datetime
+import yaml
 from typing import Dict, Any
+import os
         
 class WandbLogger():
-    def __init__(self, config: dict[str, any]) -> None:
+    def __init__(self, config: dict[str, any], resume: bool) -> None:
         if 'wandb' in config.keys(): # wandb_status off : 0, on : 1
-            self.init_wandb(config)
+            self.init_wandb(config, resume)
             self.wandb_status = True
         else:
             print("wandb not found in config: running train without logger")
             self.wandb_status = False
 
     @staticmethod
-    def init_wandb(config: dict[str, Any]) -> None:
+    def init_wandb(config: dict[str, Any], resume: bool) -> None:
         current_date = datetime.datetime.now().strftime("%Y%m%d")
         model_name = config['model']['name']
         user_name = config['wandb']['user_name']
@@ -36,7 +38,12 @@ class WandbLogger():
         
         # wandb initialize 
         try:
-            wandb.init(project=project_name, entity=team_name, config=wandb_config,  name=run_name)
+            if not(resume):
+                wandb.init(project=project_name, entity=team_name, config=wandb_config,  name=run_name)
+                run_id = wandb.run.id
+                config['wandb']['run_id'] = run_id
+            else:
+                wandb.init(project=project_name, entity=team_name, id=config['wandb']['run_id'], resume='must')
         except Exception as e:
             print(f"Error during W&B initialization: {e}")
 
@@ -63,3 +70,23 @@ class WandbLogger():
                 wandb.finish()
             except Exception as e:
                 print(f"Error during wandb finish: {e}")
+                
+def save_config(config: Dict[str, Any], output_dir: str, dev: bool=False) -> None:
+    if dev:
+        timestamp = 'dev'
+    else:
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    folder_name = f"{timestamp}_{config['model']['name']}_{config['developer']}"
+    folder_path = os.path.join(output_dir, folder_name)
+    
+    os.makedirs(folder_path, exist_ok=True)
+    
+    output_path = os.path.join(folder_path, 'config.yaml')
+    
+    config['paths']['output_dir'] = folder_path
+    
+    with open(output_path, 'w') as file:
+        yaml.dump(config, file)
+    
+    print(f"Config file saved to {output_path}")

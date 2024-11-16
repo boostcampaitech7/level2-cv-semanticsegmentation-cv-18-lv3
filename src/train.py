@@ -10,16 +10,19 @@ from src.utils.trainer import train_one_epoch, validate, save_model
 from src.datasets.dataloader import get_data_loaders
 from src.utils.metrics import get_metric_function
 from src.models.model_utils import *
-from src.utils.wandb_logger import WandbLogger
+from src.utils.logger import WandbLogger, save_config
 from typing import Any, Dict
 
 
-def run(config: Dict[str, Any]) -> float:
+def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float:
     model_name = config['model']['name']
     threshold = config['train']['threshold']
 
-    wandb = WandbLogger(config)
+    wandb = WandbLogger(config, resume)
 
+    if not(resume):
+        save_config(config, "./outputs", dev)
+    
     device = torch.device(config['device'])
     model = get_model(config['model'], config['classes']).to(device)
 
@@ -38,9 +41,9 @@ def run(config: Dict[str, Any]) -> float:
 
     #체크포인트 resume
     start_epoch = 0
-    if config['train']['resume'] and config['train']['ckpt_path']:
+    if resume:
         print(f"checkpoint resume ... ")
-        checkpoint = torch.load(config['train']['ckpt_path'], map_location=device)
+        checkpoint = torch.load(pth_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch'] + 1  # 이어서 학습할 epoch 설정
