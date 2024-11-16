@@ -34,7 +34,6 @@ def run(config: Dict[str, Any]) -> float:
     patience_counter = 0
     early_stopping_config = config['train']['early_stopping']
     
-    val_step = config['data']['val']['val_step']
     val_loss, val_metric = float('INF'), 0
 
     #체크포인트 resume
@@ -50,23 +49,20 @@ def run(config: Dict[str, Any]) -> float:
 
     #메인 트레이닝
     for epoch in range(start_epoch, config['train']['num_epochs']):
+        # train
         train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device)
-
-        print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
-        print(f"Train Loss: {train_loss:.4f}")
+        # validation
+        val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
         
         # 현재 학습률 가져오기 
         current_lr = optimizer.param_groups[0]['lr']
         
-        if (epoch+1) % val_step == 0:
-            val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
-            print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
-            
-            #val_step 마다 wandb에 기록 
-            wandb.log_metrics(epoch, train_loss, current_lr, val_loss, val_metric)
-        else:
-            #val_step 이 아닌 경우에는 train_loss 만 기록
-            wandb.log_metrics(epoch, train_loss, current_lr) 
+        print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
+        print(f"Train Loss: {train_loss:.4f}")
+        print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
+        
+        # wandb 기록
+        wandb.log_metrics(epoch, train_loss, current_lr, val_loss, val_metric)
 
         if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             if config['train']['lr_scheduler']['monitor'] == 'loss':
@@ -87,9 +83,8 @@ def run(config: Dict[str, Any]) -> float:
                 'optimizer_state_dict': optimizer.state_dict(),
                 'best_val_metric': best_val_metric
             }, config['paths']['output_dir'], f"{model_name}_best_model.pth")
-        
         else:
-            patience_counter += ((epoch+1) % val_step == 0)
+            patience_counter += 1
 
         if patience_counter >= early_stopping_config['patience']:
             print(f"Early stopping triggered after {epoch+1} epochs")
