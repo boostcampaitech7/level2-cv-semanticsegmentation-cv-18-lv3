@@ -11,6 +11,9 @@ data/**/*.json
 wandb/*
 outputs/*.csv
 
+# pretrained models
+sam_pretrained_models/
+
 __pycache__/
 *.py[cod]
 *$py.class
