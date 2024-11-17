@@ -52,9 +52,9 @@ if __name__ == "__main__":
         pth_path = None
     else:
         parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
-        parser.add_argument('-m', '--mode', required=True, help="Select mode(train/inference)")
-        parser.add_argument('-cf', '--config-folder', required=True, help="Path to config folder containing YAML files")
-        parser.add_argument('-d', '--dev', help="dev mode on off", action='store_true')
+        parser.add_argument('-m', '--mode', required=True, help="Select mode(train/inference)", default="train")
+        parser.add_argument('-cf', '--config-folder', required=True, help="Path to config folder containing YAML files", default="./configs/")
+        parser.add_argument('-d', '--dev', help="dev mode on off", action='store_true', )
         parser.add_argument('-r', '--resume', help="resume train", action='store_true')
         parser.add_argument('-p', '--pth_path', help="path to pth file")
         args = parser.parse_args()
