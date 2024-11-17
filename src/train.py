@@ -96,8 +96,12 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float
             break
     
     wandb.finish_wandb()
-
-    slack_webhook_url = config['slack']['webhook_url']
-    message  = f"Training is done! Best val metric :{best_val_metric :.4f}"
-    send_slack_notification(slack_webhook_url, message)
+    slack_webhook_url = config['webhook']['url']
+    message  = f"Training is done!\nBest val metric :{best_val_metric :.4f}"
+    
+    try:
+        send_slack_notification(config, slack_webhook_url, message)
+        print(f"slack 알람 성공")
+    except Exception as e:
+        print(f"Slack 알림 전송 실패: {e}")
     return best_val_metric
