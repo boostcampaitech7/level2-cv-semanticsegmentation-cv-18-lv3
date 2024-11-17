@@ -35,10 +35,16 @@ train:
     monitor: 'metric'
 
 model:
-  #name: "myUnet"
-  name: "smp_unet"
+  name: "smp_unet++_resnet34"
 
-  # fcn_50 /
+  # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 
+
+  # smp : smp_unet / smp_unet++
+  # encoder: resnet34 / resnet101 / efficientnet-b[0-7] / tu-maxvit_tiny_tf512 
+  # ex : smp_unet++_efficientnet-b5
+
+  # 이외 : myUnet / sam2unet_[tiny,base,large]
+
   config:
     pretrained: True
   

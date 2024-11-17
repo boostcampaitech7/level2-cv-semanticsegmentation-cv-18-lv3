@@ -2,7 +2,36 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .sam2.build_sam import build_sam2
+import os
+import subprocess
 
+def download_file(url, save_path):
+    if not os.path.exists(save_path):
+        print(f"File not found at {save_path}. Downloading from {url}...")
+        try:
+            subprocess.run(['wget', '-O', save_path, url], check=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to download the file from {url}. Error: {e}")
+
+
+def get_sam2unet(model_name, hiera_dir='./pretrained_models'):
+    model_sizes = {
+        "tiny": ("sam2_hiera_tiny.pt", "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_tiny.pt"),
+        "base": ("sam2_hiera_base+.pt", "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_base_plus.pt"),
+        "large": ("sam2_hiera_large.pt", "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_large.pt"),
+    }
+
+    model_size = model_name.split('_')[1]
+    if model_size not in model_sizes:
+        raise ValueError(f"Unknown SAM2UNet size: {model_size}")
+
+    hiera_file, download_url = model_sizes[model_size]
+    os.makedirs(hiera_dir, exist_ok=True)
+    hiera_path = os.path.join(hiera_dir, hiera_file)
+
+    download_file(download_url, hiera_path)
+
+    return SAM2UNet(model_size, hiera_path)
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
