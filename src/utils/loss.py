@@ -15,11 +15,14 @@ def dice_loss(pred=None, target=None, smooth = 1.):
     loss = (1 - ((2. * intersection + smooth) / (pred.sum(dim=2).sum(dim=2) +   target.sum(dim=2).sum(dim=2) + smooth)))
     return loss.mean()
 
-def focal_loss(pred=None, target=None, alpha=.25, gamma=2) : 
-    BCE = F.binary_cross_entropy_with_logits(pred, target)
-    BCE_EXP = torch.exp(-BCE)
-    loss = alpha * (1-BCE_EXP)**gamma * BCE
-    return loss
+def focal_loss(pred=None, target=None, alpha=0.25, gamma=2.0):
+    """Focal Loss: L_fl = -(1 - p_t)^γ * log(p_t)"""
+    pred_prob = torch.sigmoid(pred)
+    pt = pred_prob * target + (1 - pred_prob) * (1 - target)
+    loss = -alpha * (1 - pt) ** gamma * torch.log(pt + 1e-8)  
+    
+    return loss.mean()
+
 
 def focal_dice_loss(pred=None, target=None, focal_weight = 0.5):
     focal = focal_loss(pred, target)
@@ -50,5 +53,41 @@ def multiscale_structure_loss(pred=None, target=None):
 def cross_entropy_loss(pred=None, target=None):
     return F.cross_entropy(pred, target)
 
-def bce_loss(pred, target):
+def bce_loss(pred=None, target=None):
     return F.binary_cross_entropy_with_logits(pred, target)
+
+def ms_ssim_loss(pred=None, target=None, C1=0.01**2, C2=0.03**2):
+        """수식을 못 쓰겟음"""
+        pred = torch.sigmoid(pred)
+        
+        mu_pred = F.avg_pool2d(pred, kernel_size=11, stride=1, padding=5)
+        mu_target = F.avg_pool2d(target, kernel_size=11, stride=1, padding=5)
+        
+        sigma_pred = F.avg_pool2d(pred**2, kernel_size=11, stride=1, padding=5) - mu_pred**2
+        sigma_target = F.avg_pool2d(target**2, kernel_size=11, stride=1, padding=5) - mu_target**2
+        sigma_pred_target = F.avg_pool2d(pred*target, kernel_size=11, stride=1, padding=5) - mu_pred*mu_target
+        
+        numerator = (2*mu_pred*mu_target + C1) * (2*sigma_pred_target + C2)
+        denominator = (mu_pred**2 + mu_target**2 + C1) * (sigma_pred**2 + sigma_target**2 + C2)
+        ssim = numerator / (denominator + 1e-8)
+        
+        return 1 - ssim.mean()
+
+def iou_loss(pred=None, target=None, smooth=1.):
+    """dice랑 비슷하지만 분모가 합이냐 합집합이냐 차이정도 있음"""
+    pred = pred.contiguous()
+    target = target.contiguous()
+    intersection = (pred * target).sum(dim=2).sum(dim=2)
+    
+    union = pred.sum(dim=2).sum(dim=2) + target.sum(dim=2).sum(dim=2) - intersection
+    
+    iou = (intersection + smooth) / (union + smooth)
+    loss = 1 - iou
+    return loss.mean()
+
+def unet3p_loss(pred, target, gamma=2.0, beta=1.0, C1=0.01**2, C2=0.03**2):
+    """Total Segmentation Loss: L_seg = L_fl + L_ms-ssim + L_iou"""
+    l_fl = focal_loss(pred, target, gamma)
+    l_ms_ssim = ms_ssim_loss(pred, target, beta, C1, C2)
+    l_iou = iou_loss(pred, target)
+    return l_fl + l_ms_ssim + l_iou

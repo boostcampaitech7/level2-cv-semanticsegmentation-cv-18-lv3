@@ -18,9 +18,10 @@ def get_criterion(criterion_name: str) -> nn.Module:
         'CrossEntropy': cross_entropy_loss,
         'bce': bce_loss,
         'bce+dice': calc_loss_bce_dice,
-        'dice' : dice_loss,
-        'StructureLoss' : multiscale_structure_loss,
-        'focal+dice' : focal_dice_loss 
+        'dice': dice_loss,
+        'StructureLoss': multiscale_structure_loss,
+        'focal+dice': focal_dice_loss,
+        'unet3p': unet3p_loss
     }
     if criterion_name in criterions:
         return criterions[criterion_name]

@@ -9,7 +9,7 @@ train:
 
   criterion: 
     name: "bce+dice"
-  # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice
+  # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice / unet3p
 
   optimizer:
     name: "Adam"
