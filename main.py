@@ -41,43 +41,29 @@ def get_config(config_folder):
 
     return config
 
-def save_config(config: Dict[str, Any], output_dir: str, dev: bool=False) -> None:
-    if dev:
-        timestamp = 'dev'
-    else:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    
-    folder_name = f"{timestamp}_{config['model']['name']}_{config['developer']}"
-    folder_path = os.path.join(output_dir, folder_name)
-    
-    os.makedirs(folder_path, exist_ok=True)
-    
-    output_path = os.path.join(folder_path, 'config.yaml')
-    
-    config['paths']['output_dir'] = folder_path
-    
-    with open(output_path, 'w') as file:
-        yaml.dump(config, file)
-    
-    print(f"Config file saved to {output_path}")
-
 if __name__ == "__main__":
     is_debug = False
     
     if is_debug:
-        config_folder = "configs"
+        config_folder = "outputs/dev_smp_unet_kh"
         mode = 'train'
         dev = True
+        resume = False
+        pth_path = None
     else:
         parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
         parser.add_argument('-m', '--mode', required=True, help="Select mode(train/inference)")
         parser.add_argument('-cf', '--config-folder', required=True, help="Path to config folder containing YAML files")
         parser.add_argument('-d', '--dev', help="dev mode on off", action='store_true')
+        parser.add_argument('-r', '--resume', help="resume train", action='store_true')
+        parser.add_argument('-p', '--pth_path', help="path to pth file")
         args = parser.parse_args()
         
         config_folder = args.config_folder
         mode = args.mode
         dev = args.dev
+        resume = args.resume
+        pth_path = args.pth_path
    
     config = get_config(config_folder)
 
@@ -89,8 +75,8 @@ if __name__ == "__main__":
         dev_wandb_setting(config['wandb'])
 
     if mode == 'train':
-        save_config(config, config['paths']['output_dir'], dev)
-        train.run(config)
+        # save_config(config, config['paths']['output_dir'], dev)
+        train.run(config, resume, pth_path, dev)
     elif mode == 'inference':
         inference.run(config)
     else:

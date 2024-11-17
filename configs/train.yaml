@@ -7,13 +7,8 @@ train:
     name: "dice_coef"
   # accuracy / f1 / precision / recall / mse / dice_coef
 
-  # 이미 학습한 모델의 ckpt를 가지고 재학습 할 것인지 
-  resume: False
-  #어떤 ckpt로부터 재학습할 것인지
-  ckpt_path : ""
-
   criterion: 
-    name: "StructureLoss"
+    name: "bce+dice"
   # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice / dice / StructureLoss(for SAM2-UNET)
 
   optimizer:
@@ -41,7 +36,7 @@ train:
 
 model:
   #name: "myUnet"
-  name: "sam2unet_tiny"
+  name: "smp_unet"
 
   # fcn_50 /
   config:
