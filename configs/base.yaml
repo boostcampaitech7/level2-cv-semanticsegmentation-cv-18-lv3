@@ -18,6 +18,3 @@ wandb:
   user_name: "kh" #본인 id 적기
   team_name: "dkvltmxhf-hotclip" # wandb 프로젝트 명, 변경 x
   experiment: "" # 무슨 실험인지
-  
-slack :
-  webhook_url : "https://hooks.slack.com/services/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"
