@@ -9,11 +9,11 @@ train:
 
   criterion: 
     name: "bce+dice"
-  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice / dice / StructureLoss(for SAM2-UNET)
+  # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice / unet3p
 
   optimizer:
     name: "Adam"
-    # Adam / SGD
+    # Adam / SGD / AdamW
     config:
       weight_decay: 1.e-6
       # momentum: 0.9
