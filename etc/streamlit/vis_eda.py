@@ -218,6 +218,9 @@ class VisualizeImageAndAnnotation():
         
         dice_.columns = ['Class', 'Dice Score']
 
+        class_colors = {c : f"rgb{self.palette[self.class2ind[c]]}" for c in self.classes}
+        class_colors['avg_dice'] = f"rgb(255, 255, 255)"
+        
         st.title("Dice Value Table")
         
         def split_into_chunks(df, chunk_size=10):
@@ -226,13 +229,13 @@ class VisualizeImageAndAnnotation():
         chunks = split_into_chunks(dice_, chunk_size=10)
         
         if len(chunks) > 0:
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns([1, 1, 1])
             cols = [col1, col2, col3]
             for i, chunk in enumerate(chunks):
                 with cols[i % 3]:
-                    chunk.index = [f"{i%3 * 10 + j}" for j in range(len(chunk))]
-                    chunk['Color'] = chunk['Class'].apply(lambda x: f"<div style='width: 15px; height: 15px; background-color: {class_colors[x]}; border-radius: 50%;'></div>")
-                    st.table(chunk)
+                    # chunk.index = [f"{i%3 * 10 + j}" for j in range(len(chunk))]
+                    chunk['Col'] = chunk['Class'].apply(lambda x: f"<div style='width: 15px; height: 15px; background-color: {class_colors[x]}; border-radius: 50%;'></div>")
+                    st.write(chunk.to_html(escape=False, index=False), unsafe_allow_html=True)
         
     def plot_pred_only(self, idx: int) -> None:
         grouped = self.csv_pd.groupby("image_name")
@@ -337,5 +340,5 @@ if __name__=="__main__":
     csv_path = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/outputs/saved_models/temp_2020/output_baseline_100ep.csv"
     a = VisualizeImageAndAnnotation(img_root, label_root, test_root, csv_path)
     a.set_config_path("outputs/dev_smp_unet_kh")
-    a.plot_gt_and_pred(0)
+    a.plot_gt_and_pred(0, "Ascending", "avg_dice")
     

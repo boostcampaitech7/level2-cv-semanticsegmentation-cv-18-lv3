@@ -66,8 +66,8 @@ elif option == "visualize images & annotations":
         pass
     elif sub_option == "ground truth & prediction":
         config_path = st.sidebar.text_input("Enter the config path", "outputs/dev_smp_unet_kh")
-        sort_order = st.radio("Select sort order:", ("None", "Ascending", "Descending"))
-        sort_class = st.selectbox("Select class to sort", columns)
+        sort_order = st.sidebar.radio("Select sort order:", ("None", "Ascending", "Descending"))
+        sort_class = st.sidebar.selectbox("Select class to sort", columns)
     elif sub_option == "prediction only":
         pred_path = st.sidebar.text_input("Enter the pred csv path", "outputs/saved_models/temp_2020/output_baseline_100ep.csv")
         
