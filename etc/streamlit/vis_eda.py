@@ -156,7 +156,7 @@ class VisualizeImageAndAnnotation():
         
         image = (image * 255).astype(np.uint8)
         
-        label_rgb = self.label2rgb2(label)
+        label_rgb = self.label2rgb(label)
         
         fig, ax = plt.subplots(1, 1, figsize=(10, 5))
         ax.imshow(image)
@@ -181,24 +181,18 @@ class VisualizeImageAndAnnotation():
             decoded_mask = self.rle_decode(rle, (height, width))
             mask[self.class2ind[class_name]] = decoded_mask
         
-        color_mask = self.label2rgb(mask, height, width)
+        color_mask = self.label2rgb(mask)
         blended = cv2.addWeighted(image, 0.5, color_mask, 0.5, 0)
         blended = Image.fromarray(blended)
         st.image(blended, caption=f"{self.tests[idx]}")
 
-    def label2rgb2(self, label):
+    def label2rgb(self, label):
         image_size = label.shape[1:] + (3, )
         image = np.zeros(image_size, dtype=np.uint8)
         
         for i, class_label in enumerate(label):
             image[class_label == 1] = self.palette[i]
             
-        return image
-    
-    def label2rgb(self, label: np.ndarray, height: int, width: int) -> np.ndarray:
-        image = np.zeros((height, width, 3), dtype=np.uint8)
-        for i, class_mask in enumerate(label):
-            image[class_mask == 1] = self.palette[i]
         return image
     
     @staticmethod
