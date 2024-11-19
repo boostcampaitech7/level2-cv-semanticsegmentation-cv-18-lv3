@@ -11,6 +11,8 @@ from sklearn.manifold import TSNE
 import cv2
 from PIL import Image
 
+from time import time
+
 class VisualizeMetaData():
     def __init__(self, xlsx_path) -> None:
         self.xlsx_path = xlsx_path
@@ -151,8 +153,6 @@ class VisualizeImageAndAnnotation():
     
     def plot_train_annotation(self, idx: int): 
         image, label = self.xraydataset[idx]
-        image = image.numpy().transpose(1, 2, 0)
-        label = label.numpy()
         
         image = (image * 255).astype(np.uint8)
         
@@ -164,8 +164,8 @@ class VisualizeImageAndAnnotation():
         ax.axis("off")
         
         # Streamlit에 이미지 표시
-        st.pyplot(fig)
         
+        st.pyplot(fig)
     
     def plot_pred_only(self, idx: int):
         grouped = self.csv_pd.groupby("image_name")
@@ -264,11 +264,7 @@ class XRayDataset(Dataset):
             image = result["image"]
             label = result["mask"] if self.is_train else label
 
-        image = image.transpose(2, 0, 1) 
         label = label.transpose(2, 0, 1)
-        
-        image = torch.from_numpy(image).float()
-        label = torch.from_numpy(label).float()
             
         return image, label
         
