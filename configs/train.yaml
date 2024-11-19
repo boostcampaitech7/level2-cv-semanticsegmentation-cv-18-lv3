@@ -1,5 +1,5 @@
 train:
-  num_epochs: 10
+  num_epochs: 100
   n_splits: 5
   threshold: 0.5
    
@@ -47,4 +47,8 @@ model:
 
   config:
     pretrained: True
+  
+
+webhook : 
+  url : "https://hooks.slack.com/services/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"
   
