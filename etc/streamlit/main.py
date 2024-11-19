@@ -78,7 +78,7 @@ elif option == "visualize images & annotations":
                 st.session_state.eda.plot_train_annotation(index)
             
         else:
-            index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.get_test_count()-1, step=1)
+            index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.eda.get_test_count()-1, step=1)
             st.session_state.eda.set_csv(pred_path)
             st.session_state.eda.plot_pred_only(index)
             
