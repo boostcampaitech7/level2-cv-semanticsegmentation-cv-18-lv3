@@ -13,6 +13,12 @@ if "output_df" not in st.session_state:
     st.session_state.output_df = pd.DataFrame()
 if "flag" not in st.session_state:
     st.session_state.flag = False
+    
+columns = ['avg_dice', 'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+           'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10', 'finger-11',
+           'finger-12', 'finger-13', 'finger-14', 'finger-15', 'finger-16', 'finger-17',
+           'finger-18', 'finger-19', 'Trapezium', 'Trapezoid', 'Capitate', 'Hamate',
+           'Scaphoid', 'Lunate', 'Triquetrum', 'Pisiform', 'Radius', 'Ulna']
 
 st.sidebar.success("🔥HotCLIP")
 # st.markdown("<h2 style='text-align: center;'>Segmentation</h2>", unsafe_allow_html=True)
@@ -59,7 +65,9 @@ elif option == "visualize images & annotations":
     elif sub_option == "image with annotation":
         pass
     elif sub_option == "ground truth & prediction":
-        pred_path = st.sidebar.text_input("Enter the pred csv path", "outputs/saved_models/temp_2020/output_baseline_100ep.csv")
+        config_path = st.sidebar.text_input("Enter the config path", "outputs/dev_smp_unet_kh")
+        sort_order = st.radio("Select sort order:", ("None", "Ascending", "Descending"))
+        sort_class = st.selectbox("Select class to sort", columns)
     elif sub_option == "prediction only":
         pred_path = st.sidebar.text_input("Enter the pred csv path", "outputs/saved_models/temp_2020/output_baseline_100ep.csv")
         
@@ -78,9 +86,15 @@ elif option == "visualize images & annotations":
                 st.session_state.eda.plot_train_annotation(index)
             
         else:
-            index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.eda.get_test_count()-1, step=1)
-            st.session_state.eda.set_csv(pred_path)
-            st.session_state.eda.plot_pred_only(index)
+            if sub_option == "ground truth & prediction":
+                index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.eda.get_test_count()-1, step=1)
+                st.session_state.eda.set_config_path(config_path)
+                st.session_state.eda.plot_gt_and_pred(index, sort_order, sort_class)
+                
+            elif sub_option == "prediction only":
+                index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.eda.get_test_count()-1, step=1)
+                st.session_state.eda.set_csv(pred_path)
+                st.session_state.eda.plot_pred_only(index)
             
 else:
     pass

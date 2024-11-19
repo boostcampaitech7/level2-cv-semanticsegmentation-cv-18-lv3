@@ -39,6 +39,7 @@ if __name__ == "__main__":
     config_path = "outputs/dev_smp_unet_kh"
     pth_path = "outputs/dev_smp_unet_kh/smp_unet_best_model.pth"
     threshold = 0.5
+    batch_size = 8
     
     config = get_config(config_path)
 
@@ -58,7 +59,7 @@ if __name__ == "__main__":
 
     _dataloader = DataLoader(
         _dataset,
-        batch_size=8,
+        batch_size=batch_size,
         shuffle=False,
         num_workers=4,
         drop_last=False
@@ -116,7 +117,7 @@ if __name__ == "__main__":
             masks = masks.detach().cpu().numpy()
             
             for idx, (output, mask) in enumerate(zip(outputs, masks)):
-                file_path, _ = _dataset.get_filepath(idx*i)
+                file_path, _ = _dataset.get_filepath(batch_size*i + idx)
                 
                 for c, (seg_m, gt_m) in enumerate(zip(output, mask)):
                     rle = encode_mask_to_rle(seg_m)
