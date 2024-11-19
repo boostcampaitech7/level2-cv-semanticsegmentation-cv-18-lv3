@@ -5,6 +5,40 @@ import torch.nn.functional as F
 
 from .build_sam import build_sam_vit_h, build_sam_vit_l, build_sam_vit_b
 
+import os
+import subprocess
+
+
+def download_file(url, save_path):
+    if not os.path.exists(save_path):
+        print(f"File not found at {save_path}. Downloading from {url}...")
+        try:
+            subprocess.run(['curl', '-o', save_path, url], check=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to download the file from {url}. Error: {e}")
+
+
+def get_sam_pth(model_name, hiera_dir='./sam_pretrained'):
+    os.makedirs(os.path.dirname(hiera_dir), exist_ok=True)
+    model_sizes = {
+        "b": ("sam_vit_b.pth", "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth"),
+        "h": ("sam_vit_h.pth", "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"),
+        "l": ("sam_vit_l.pth", "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth"),
+    }
+
+    model_size = model_name.split('_')[1]
+    if model_size not in model_sizes:
+        raise ValueError(f"Unknown SAM2UNet size: sam_vit_{model_size}")
+
+    hiera_file, download_url = model_sizes[model_size]
+    os.makedirs(hiera_dir, exist_ok=True)
+    hiera_path = os.path.join(hiera_dir, hiera_file)
+
+    download_file(download_url, hiera_path)
+
+    return SAM(hiera_path)
+
+
 class SAM(nn.Module):
     def __init__(self, checkpoint=None) -> None:
         super(SAM, self).__init__()

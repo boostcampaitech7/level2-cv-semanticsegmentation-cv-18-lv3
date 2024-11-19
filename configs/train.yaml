@@ -35,7 +35,7 @@ train:
     monitor: 'metric'
 
 model:
-  name: "Sam"
+  name: "sam_b"
 
   # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 
 
@@ -43,7 +43,7 @@ model:
   # encoder: resnet34 / resnet101 / efficientnet-b[0-7] / tu-maxvit_tiny_tf512 
   # ex : smp_unet++_efficientnet-b5
 
-  # 이외 : myUnet / sam2unet_[tiny,base,large]
+  # 이외 : myUnet / sam2unet_[tiny,base,large] / sam_[b, h, l]
 
   config:
     pretrained: True

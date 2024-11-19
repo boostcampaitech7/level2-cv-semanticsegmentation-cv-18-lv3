@@ -14,6 +14,7 @@ from .smp_utils import get_smp_model
 from ..utils.loss import *
 
 from .sam.SAM import SAM
+from .sam.SAM import get_sam_pth
 
 import subprocess
 
@@ -94,25 +95,7 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
     elif 'sam2unet_' in model_name:
         model = get_sam2unet(model_name)  
         
-    elif model_name == "Sam":
-        pretrained_dir = './sam_pretrained'
-        os.makedirs(pretrained_dir, exist_ok=True)
-        pretrained_model_path = os.path.join(pretrained_dir, 'sam_vit_l')
-        
-        # ckpt_file = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
-        ckpt_file = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth'
-        # ckpt_file = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth'
-        
-        if not os.path.exists(pretrained_model_path) :
-            print(f"Hiera file not found at {pretrained_model_path}. Downloading from {ckpt_file}...")
-            try:
-                subprocess.run(['curl', '-o', pretrained_model_path, ckpt_file], check=True)
-            except subprocess.CalledProcessError as e :
-                raise RuntimeError(f"Failed to download the hiera file from {ckpt_file}. Error: {e}")
-
-        model = SAM(pretrained_model_path)
-        
-    else:
-        raise ValueError(f"Unknown model: {model_name}")
+    elif 'sam_' in model_name:
+        model = get_sam_pth(model_name)
 
     return model
