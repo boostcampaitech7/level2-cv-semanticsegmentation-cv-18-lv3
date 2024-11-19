@@ -5,10 +5,10 @@ smp_models = {
     "unet++": smp.UnetPlusPlus,
 }
 
-def get_smp_model(model_config, num_classes):
+def get_smp_model(model_name, num_classes):
 
     # 모델 이름 분리: smp_unet_resnet34 -> ("unet", "resnet34")
-    _, model_key, encoder_name = model_config["name"].split('_')
+    _, model_key, encoder_name = model_name.split('_')
     if model_key not in smp_models:
         raise ValueError(f"Unknown SMP model: {model_key}")
     
