@@ -6,20 +6,25 @@ import numpy as np
 import datetime
 import uuid
 import os
+import requests
+from src.utils.alert import send_slack_notification
 from src.utils.trainer import train_one_epoch, validate, save_model
 from src.datasets.dataloader import get_data_loaders
 from src.utils.metrics import get_metric_function
 from src.models.model_utils import *
-from src.utils.wandb_logger import init_wandb, log_metrics, finish_wandb
+from src.utils.logger import WandbLogger, save_config
 from typing import Any, Dict
 
 
-def run(config: Dict[str, Any]) -> float:
+def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float:
     model_name = config['model']['name']
     threshold = config['train']['threshold']
 
-    init_wandb(config)
+    wandb = WandbLogger(config, resume)
 
+    if not(resume):
+        save_config(config, "./outputs", dev)
+    
     device = torch.device(config['device'])
     model = get_model(config['model'], config['classes']).to(device)
 
@@ -34,14 +39,13 @@ def run(config: Dict[str, Any]) -> float:
     patience_counter = 0
     early_stopping_config = config['train']['early_stopping']
     
-    val_step = config['data']['val']['val_step']
     val_loss, val_metric = float('INF'), 0
 
     #체크포인트 resume
     start_epoch = 0
-    if config['train']['resume'] and config['train']['ckpt_path']:
+    if resume:
         print(f"checkpoint resume ... ")
-        checkpoint = torch.load(config['train']['ckpt_path'], map_location=device)
+        checkpoint = torch.load(pth_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch'] + 1  # 이어서 학습할 epoch 설정
@@ -50,20 +54,20 @@ def run(config: Dict[str, Any]) -> float:
 
     #메인 트레이닝
     for epoch in range(start_epoch, config['train']['num_epochs']):
+        # train
         train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device)
-
+        # validation
+        val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
+        
+        # 현재 학습률 가져오기 
+        current_lr = optimizer.param_groups[0]['lr']
+        
         print(f"Epoch {epoch+1}/{config['train']['num_epochs']}")
         print(f"Train Loss: {train_loss:.4f}")
+        print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
         
-        if (epoch+1) % val_step == 0:
-            val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
-            print(f"Val Loss: {val_loss:.4f}, Val Metric: {val_metric:.4f}")
-            
-            #val_step 마다 wandb에 기록 
-            log_metrics(epoch, train_loss, val_loss, val_metric)
-        else:
-            #val_step 이 아닌 경우에는 train_loss 만 기록
-            log_metrics(epoch, train_loss) 
+        # wandb 기록
+        wandb.log_metrics(epoch, train_loss, current_lr, val_loss, val_metric)
 
         if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             if config['train']['lr_scheduler']['monitor'] == 'loss':
@@ -84,13 +88,20 @@ def run(config: Dict[str, Any]) -> float:
                 'optimizer_state_dict': optimizer.state_dict(),
                 'best_val_metric': best_val_metric
             }, config['paths']['output_dir'], f"{model_name}_best_model.pth")
-        
         else:
-            patience_counter += ((epoch+1) % val_step == 0)
+            patience_counter += 1
 
         if patience_counter >= early_stopping_config['patience']:
             print(f"Early stopping triggered after {epoch+1} epochs")
             break
     
-    finish_wandb()
+    wandb.finish_wandb()
+    slack_webhook_url = config['webhook']['url']
+    message  = f"Training is done!\nBest val metric :{best_val_metric :.4f}"
+    
+    try:
+        send_slack_notification(config, slack_webhook_url, message)
+        print(f"slack 알람 성공")
+    except Exception as e:
+        print(f"Slack 알림 전송 실패: {e}")
     return best_val_metric

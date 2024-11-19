@@ -41,8 +41,9 @@ def run(config):
         for step, (images, image_names) in tqdm(enumerate(test_loader), total=len(test_loader)):
             images = images.to(device)
 
-                
             outputs = model(images)
+            if isinstance(outputs, tuple) :
+                outputs, *_ = outputs
             outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
             outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear")
             outputs = torch.sigmoid(outputs)

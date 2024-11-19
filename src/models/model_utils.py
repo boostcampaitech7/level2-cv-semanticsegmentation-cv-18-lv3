@@ -1,34 +1,31 @@
-import timm
+import os
+import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.optim as optim
 from torchvision import models
 from typing import Any, Dict, Optional
 import segmentation_models_pytorch as smp
-import torch.nn.functional as F
+
 from .unet import UNetResNet34 
+from .SAM2UNet import get_sam2unet
+from .smp_utils import get_smp_model
 
-def calc_loss_bce_dice(pred, target, bce_weight=0.5):
-    bce = F.binary_cross_entropy_with_logits(pred, target)
-    pred = F.sigmoid(pred)
-    dice = dice_loss(pred, target)
-    loss = bce * bce_weight + dice * (1 - bce_weight)
-    return loss
+from ..utils.loss import *
 
-def dice_loss(pred, target, smooth = 1.):
-    pred = pred.contiguous()
-    target = target.contiguous()   
-    intersection = (pred * target).sum(dim=2).sum(dim=2)
-    loss = (1 - ((2. * intersection + smooth) / (pred.sum(dim=2).sum(dim=2) +   target.sum(dim=2).sum(dim=2) + smooth)))
-    return loss.mean()
-    
+from .sam.SAM import SAM
+
+import subprocess
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
-        'CrossEntropyLoss': nn.CrossEntropyLoss(),
-        'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(),
+        'CrossEntropy': cross_entropy_loss,
+        'bce': bce_loss,
         'bce+dice': calc_loss_bce_dice,
-        'dice' : dice_loss
+        'dice': dice_loss,
+        'StructureLoss': multiscale_structure_loss,
+        'focal+dice': focal_dice_loss,
+        'unet3p': unet3p_loss
     }
     if criterion_name in criterions:
         return criterions[criterion_name]
@@ -75,32 +72,47 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
     model_name = model_config['name']
     num_classes = len(classes)
 
-    if model_name == 'fcn_50':
-        model = models.segmentation.fcn_resnet50(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
-    elif model_name == 'fcn_101':
-        model = models.segmentation.fcn_resnet101(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
-    elif model_name == 'deeplabv3_50':
-        model = models.segmentation.deeplabv3_resnet50(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)        
-    elif model_name == 'deeplabv3_101':
-        model = models.segmentation.deeplabv3_resnet101(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
-    elif 'smp_' in model_name:
-        model_name = model_name.split('_')[1]
+    torchvision_models = {
+        "fcn_50": lambda: models.segmentation.fcn_resnet50(**model_config['config']),
+        "fcn_101": lambda: models.segmentation.fcn_resnet101(**model_config['config']),
+        "deeplabv3_50": lambda: models.segmentation.deeplabv3_resnet50(**model_config['config']),
+        "deeplabv3_101": lambda: models.segmentation.deeplabv3_resnet101(**model_config['config']),
+    }
+
+    if model_name in torchvision_models:
+        model = torchvision_models[model_name]()
+        last_channels = 512 if "fcn" in model_name else 256
+        model.classifier[4] = nn.Conv2d(last_channels, num_classes, kernel_size=1)
         
-        if model_name == 'unet':
-            model = smp.Unet('resnet34', encoder_weights="imagenet", classes=num_classes)
-            
-        else:
-            raise ValueError(f"Unknown model: {model_name}")
+        
+    elif 'smp_' in model_name:
+        model = get_smp_model(model_config, num_classes)
+
     elif model_name == "myUnet":
         model = UNetResNet34()
-    else:
-        raise ValueError(f"Unkown model: {model_name}")
+    
+    elif 'sam2unet_' in model_name:
+        model = get_sam2unet(model_name)  
+        
+    elif model_name == "Sam":
+        pretrained_dir = './sam_pretrained'
+        os.makedirs(pretrained_dir, exist_ok=True)
+        pretrained_model_path = os.path.join(pretrained_dir, 'sam_vit_l')
+        
+        # ckpt_file = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
+        ckpt_file = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth'
+        # ckpt_file = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth'
+        
+        if not os.path.exists(pretrained_model_path) :
+            print(f"Hiera file not found at {pretrained_model_path}. Downloading from {ckpt_file}...")
+            try:
+                subprocess.run(['curl', '-o', pretrained_model_path, ckpt_file], check=True)
+            except subprocess.CalledProcessError as e :
+                raise RuntimeError(f"Failed to download the hiera file from {ckpt_file}. Error: {e}")
 
-    # 매핑된 모델 이름 가져오기, 없으면 원래 이름 사용
-    # model_name = model_mapping.get(model_config_name, model_config_name)
+        model = SAM(pretrained_model_path)
+        
+    else:
+        raise ValueError(f"Unknown model: {model_name}")
 
     return model
