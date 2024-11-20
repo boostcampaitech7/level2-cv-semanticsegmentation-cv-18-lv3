@@ -11,6 +11,8 @@ import pandas as pd
 import torch.nn.functional as F
 import glob
 from tqdm import tqdm
+import argparse
+
 import yaml
 
 
@@ -31,15 +33,25 @@ def get_config(config_folder):
 
     return config
 
-
 if __name__ == "__main__":
     img_path = "data/train/DCM"
     label_path = "data/train/outputs_json"
-    top_k = 5
-    config_path = "outputs/dev_smp_unet_kh"
-    pth_path = "outputs/dev_smp_unet_kh/smp_unet_best_model.pth"
-    threshold = 0.5
-    batch_size = 8
+    # config_path = "outputs/dev_smp_unet_kh"
+    # pth_path = "outputs/dev_smp_unet_kh/smp_unet_best_model.pth"
+    # threshold = 0.5
+    # batch_size = 8
+    
+    parser = argparse.ArgumentParser(description="parse cconfig path and checkpoint to create validation result")
+    parser.add_argument('-cf', '--config-folder', required=True, help="Path to config folder containing YAML files")
+    parser.add_argument('-pth', '--checkpoint', required=True, help='Path to model checkpoint')
+    parser.add_argument('--threshold', default=0.5)
+    parser.add_argument('--batch_size', default=8)
+    args = parser.parse_args()
+    
+    config_path = args.config_folder
+    pth_path = args.checkpoint
+    threshold = args.threshold
+    batch_size = args.batch_size
     
     config = get_config(config_path)
 
