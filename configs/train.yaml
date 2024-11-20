@@ -12,7 +12,7 @@ train:
   # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice / unet3p
 
   optimizer:
-    name: "Adam"
+    name: "AdamW"
     # Adam / SGD / AdamW
     config:
       weight_decay: 1.e-6
@@ -29,7 +29,7 @@ train:
       verbose: True
 
   early_stopping:
-    patience: 5
+    patience: 10
     min_delta: 0.001
     evidence: 'loss'
     monitor: 'metric'
@@ -50,5 +50,6 @@ model:
   
 
 webhook : 
-  url : "https://hooks.slack.com/services/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"
+  #vlm slack 채널 webhook 주소로 변경
+  url : "https://hooks.slack.com/services/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"
   

@@ -57,6 +57,7 @@ if __name__ == "__main__":
         parser.add_argument('-d', '--dev', help="dev mode on off", action='store_true', )
         parser.add_argument('-r', '--resume', help="resume train", action='store_true')
         parser.add_argument('-p', '--pth_path', help="path to pth file")
+        parser.add_argument('-wh', '--wehhook', help='slack webhook alarm', default=False)
         args = parser.parse_args()
         
         config_folder = args.config_folder
@@ -64,6 +65,7 @@ if __name__ == "__main__":
         dev = args.dev
         resume = args.resume
         pth_path = args.pth_path
+        webhook = args.webhook
    
     config = get_config(config_folder)
 
@@ -76,7 +78,7 @@ if __name__ == "__main__":
 
     if mode == 'train':
         # save_config(config, config['paths']['output_dir'], dev)
-        train.run(config, resume, pth_path, dev)
+        train.run(config, resume, pth_path, dev, webhook)
     elif mode == 'inference':
         inference.run(config)
     else:
