@@ -1,5 +1,5 @@
 train:
-  num_epochs: 10
+  num_epochs: 100
   n_splits: 5
   threshold: 0.5
    
@@ -9,11 +9,11 @@ train:
 
   criterion: 
     name: "bce+dice"
-  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice / dice / StructureLoss(for SAM2-UNET)
+  # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice / unet3p
 
   optimizer:
     name: "Adam"
-    # Adam / SGD
+    # Adam / SGD / AdamW
     config:
       weight_decay: 1.e-6
       # momentum: 0.9
@@ -35,10 +35,20 @@ train:
     monitor: 'metric'
 
 model:
-  #name: "myUnet"
-  name: "smp_unet"
+  name: "smp_unet++_resnet34"
 
-  # fcn_50 /
+  # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 
+
+  # smp : smp_unet / smp_unet++
+  # encoder: resnet34 / resnet101 / efficientnet-b[0-7] / tu-maxvit_tiny_tf512 
+  # ex : smp_unet++_efficientnet-b5
+
+  # 이외 : myUnet / sam2unet_[tiny,base,large]
+
   config:
     pretrained: True
+  
+
+webhook : 
+  url : "https://hooks.slack.com/services/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"
   

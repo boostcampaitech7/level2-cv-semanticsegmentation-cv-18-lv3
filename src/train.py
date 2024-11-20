@@ -6,6 +6,8 @@ import numpy as np
 import datetime
 import uuid
 import os
+import requests
+from src.utils.alert import send_slack_notification
 from src.utils.trainer import train_one_epoch, validate, save_model
 from src.datasets.dataloader import get_data_loaders
 from src.utils.metrics import get_metric_function
@@ -24,7 +26,7 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float
         save_config(config, "./outputs", dev)
     
     device = torch.device(config['device'])
-    model = get_model(config['model'], config['classes']).to(device)
+    model = get_model(config['model']['name'], config['classes']).to(device)
 
     train_loader, val_loader = get_data_loaders(config)
 
@@ -94,4 +96,12 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float
             break
     
     wandb.finish_wandb()
+    slack_webhook_url = config['webhook']['url']
+    message  = f"Training is done!\nBest val metric :{best_val_metric :.4f}"
+    
+    try:
+        send_slack_notification(config, slack_webhook_url, message)
+        print(f"slack 알람 성공")
+    except Exception as e:
+        print(f"Slack 알림 전송 실패: {e}")
     return best_val_metric

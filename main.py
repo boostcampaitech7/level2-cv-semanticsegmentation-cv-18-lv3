@@ -6,8 +6,7 @@ import numpy as np
 import glob
 import argparse
 import os
-from src import train
-from src import inference 
+from src import train, inference, ensemble
 from datetime import datetime
 import shutil
 from typing import Any, Dict
@@ -52,8 +51,8 @@ if __name__ == "__main__":
         pth_path = None
     else:
         parser = argparse.ArgumentParser(description='Parse configuration files from a folder')
-        parser.add_argument('-m', '--mode', required=True, help="Select mode(train/inference)", default="train")
-        parser.add_argument('-cf', '--config-folder', required=True, help="Path to config folder containing YAML files", default="./configs/")
+        parser.add_argument('-m', '--mode', help="Select mode(train/inference/ensemble)", default="train")
+        parser.add_argument('-cf', '--config-folder', help="Path to config folder containing YAML files", default="./configs/")
         parser.add_argument('-d', '--dev', help="dev mode on off", action='store_true', )
         parser.add_argument('-r', '--resume', help="resume train", action='store_true')
         parser.add_argument('-p', '--pth_path', help="path to pth file")
@@ -79,5 +78,7 @@ if __name__ == "__main__":
         train.run(config, resume, pth_path, dev)
     elif mode == 'inference':
         inference.run(config)
+    elif mode == 'ensemble':
+        ensemble.run(config)
     else:
         raise ValueError(f"Invalid mode: {mode}")
