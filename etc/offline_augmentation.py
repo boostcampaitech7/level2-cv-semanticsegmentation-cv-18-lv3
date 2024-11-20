@@ -64,10 +64,15 @@ def extract_polygons_from_mask(mask: np.ndarray) -> Tuple[List[List[List[int]]],
 def get_offline_transform() -> A.Compose:
     transform = A.Compose(
         [
-            A.Rotate(limit=20, p=1),
+            A.Sharpen(
+                alpha=(0.2, 0.5),  # 샤픈 강도 범위
+                lightness=(0.8, 1.2),  # 밝기 조정 범위
+                p=1  # 적용 확률
+            ),
         ]
     )
     return transform
+
 
 def load_annotations(label_path: str) -> List[dict]:
     #json file 에서 annotatation 로드 
