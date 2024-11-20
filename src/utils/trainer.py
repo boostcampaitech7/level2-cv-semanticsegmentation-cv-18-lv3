@@ -6,6 +6,7 @@ import numpy as np
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from typing import Any, Dict, Tuple
+import torchvision.transforms as T
 
 # save model function 
 def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth"):
@@ -30,7 +31,17 @@ def train_one_epoch(
         inputs, masks = inputs.to(device), masks.to(device)
 
         optimizer.zero_grad()
-        outputs = model(inputs)
+        
+        if(model.__class__.__name__ == 'SAM'):
+            conv_layer = nn.Conv2d(29, 1, kernel_size=1).to(device)  # Move Conv2d layer to device
+            mask = conv_layer(masks)  # Convert 29 channels to 1 channel
+            downscale_transform = T.Resize((256, 256))
+
+            # 예시 입력 이미지에 변환 적용
+            downscaled_mask = downscale_transform(mask)
+            outputs = model(inputs, downscaled_mask)
+        else:
+            outputs = model(inputs)
         
          # 모델 출력이 딕셔너리인 경우 처리
         logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
@@ -64,7 +75,17 @@ def validate(
         for batch in tqdm(dataloader, desc="Validating"):
             inputs, masks = batch
             inputs, masks = inputs.to(device), masks.to(device)
-            outputs = model(inputs)
+            
+            if(model.__class__.__name__ == 'SAM'):
+                conv_layer = nn.Conv2d(29, 1, kernel_size=1).to(device)  # Move Conv2d layer to device
+                mask = conv_layer(masks)  # Convert 29 channels to 1 channel
+                downscale_transform = T.Resize((256, 256))
+
+                # 예시 입력 이미지에 변환 적용
+                downscaled_mask = downscale_transform(mask)
+                outputs = model(inputs, downscaled_mask)
+            else:
+                outputs = model(inputs)
 
             if isinstance(outputs, tuple) :
                 logits, logits1, logits2 = outputs
