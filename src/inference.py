@@ -13,6 +13,10 @@ from src.models.model_utils import get_model
 from src.datasets.dataloader import get_inference_loaders
 from src.utils.rle_convert import encode_mask_to_rle
 
+### modified
+from src.utils.tta import get_tta_transform
+import ttach as tta
+
 def run(config):
     threshold = config['train']['threshold']
     classes = config['classes']
@@ -34,6 +38,10 @@ def run(config):
     model.load_state_dict(pth_)
     model.to(device)
     model.eval()
+
+    if config['inference']['tta'] == True :
+        tta_transforms = get_tta_transform(config['data'], is_train=False)
+        model = tta.SegmentationTTAWrapper(model, tta_transforms)
 
     rles = []
     filename_and_class = []

@@ -41,3 +41,9 @@ data:
   inference:
     batch_size: 2
     num_workers: 4
+    tta:
+      HorizontalFlip: {}
+      Scale:
+        scales: [1, 1.2, 1.4]
+      Sharpening :
+        lightness: [0.8, 1.2]
