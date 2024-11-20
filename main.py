@@ -45,7 +45,7 @@ if __name__ == "__main__":
     is_debug = False
     
     if is_debug:
-        config_folder = "outputs/dev_smp_unet_kh"
+        config_folder = "outputs/20241119_104529_sam_b_mj"
         mode = 'train'
         dev = True
         resume = False

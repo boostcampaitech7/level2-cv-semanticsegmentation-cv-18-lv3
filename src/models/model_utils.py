@@ -1,5 +1,3 @@
-import os
-import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.optim as optim
@@ -13,10 +11,7 @@ from .smp_utils import get_smp_model
 
 from ..utils.loss import *
 
-from .sam.SAM import SAM
-from .sam.SAM import get_sam_pth
-
-import subprocess
+from .sam.SAM import get_sam
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
@@ -96,6 +91,6 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
         model = get_sam2unet(model_name)  
         
     elif 'sam_' in model_name:
-        model = get_sam_pth(model_name)
+        model = get_sam(model_name)
 
     return model

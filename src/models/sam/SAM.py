@@ -3,10 +3,12 @@ import torch.nn as nn
 
 import torch.nn.functional as F
 
-from .build_sam import build_sam_vit_h, build_sam_vit_l, build_sam_vit_b
+from .build_sam import build_sam_vit_b
 
 import os
 import subprocess
+
+from typing import List
 
 
 def download_file(url, save_path):
@@ -18,7 +20,7 @@ def download_file(url, save_path):
             raise RuntimeError(f"Failed to download the file from {url}. Error: {e}")
 
 
-def get_sam_pth(model_name, hiera_dir='./sam_pretrained'):
+def get_sam(model_name, hiera_dir='./sam_pretrained'):
     os.makedirs(os.path.dirname(hiera_dir), exist_ok=True)
     model_sizes = {
         "b": ("sam_vit_b.pth", "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth"),
@@ -40,7 +42,11 @@ def get_sam_pth(model_name, hiera_dir='./sam_pretrained'):
 
 
 class SAM(nn.Module):
-    def __init__(self, checkpoint=None) -> None:
+    def __init__(self,
+                 checkpoint=None,
+                 pixel_mean: List[float] = [123.675, 116.28, 103.53],
+                 pixel_std: List[float] = [58.395, 57.12, 57.375],
+        ) -> None:
         super(SAM, self).__init__()
         sam = build_sam_vit_b(checkpoint)
         self.sam = sam
@@ -48,118 +54,60 @@ class SAM(nn.Module):
         self.prompt_encoder = sam.prompt_encoder
         self.mask_decoder = sam.mask_decoder
         
+        self.register_buffer("pixel_mean", torch.Tensor(pixel_mean).view(-1, 1, 1), False)
+        self.register_buffer("pixel_std", torch.Tensor(pixel_std).view(-1, 1, 1), False)
+        
+        
         # 목표 이미지 크기를 512로 설정
-        self.img_size = 512  # 변경된 목표 이미지 크기
-        self.patch_size = 16  # 패치 크기
-        self.grid_size = self.img_size // self.patch_size  # 그리드 크기 조정
+        # self.img_size = 512  # 변경된 목표 이미지 크기
+        # self.patch_size = 16  # 패치 크기
+        # self.grid_size = self.img_size // self.patch_size  # 그리드 크기 조정
         
         self.mask_threshold = 0.5  # 마스크 임계값
         
-        # 모델 파라미터 조정
-        # self.adjust_model_parameters()
-    
-    def adjust_model_parameters(self):
-        self.adjust_position_embeddings()
-        self.adjust_relative_position_matrices()
-    
-    def adjust_position_embeddings(self):
-        pos_embed = self.image_encoder.pos_embed
-        orig_grid_size = int(pos_embed.shape[1])  # 원본 그리드 크기
-        
-        if orig_grid_size != self.grid_size:
-            # 위치 임베딩 크기 변경: 512x512 이미지에 맞게 크기 조정
-            pos_embed_resized = F.interpolate(
-                pos_embed.permute(0, 3, 1, 2),  # [1, dim, H, W]
-                size=(self.grid_size, self.grid_size),
-                mode='bicubic',
-                align_corners=False
-            )
-            self.image_encoder.pos_embed = nn.Parameter(pos_embed_resized.permute(0, 2, 3, 1))
-            
-            print(f"Position embedding resized from {orig_grid_size}x{orig_grid_size} to {self.grid_size}x{self.grid_size}")
-    
-    def adjust_relative_position_matrices(self):
-        # Loop through all the attention blocks if you're adjusting all of them
-        for block in self.sam.image_encoder.blocks:
-            attn_block = block.attn
-
-            # Calculate new size for relative position matrices
-            new_size = 2 * self.grid_size - 1
-
-            # Resize rel_pos_h
-            old_rel_pos_h = attn_block.rel_pos_h
-            new_rel_pos_h = F.interpolate(
-                old_rel_pos_h.unsqueeze(0).unsqueeze(0),
-                size=(new_size, old_rel_pos_h.size(1)),
-                mode='bilinear',
-                align_corners=False
-            ).squeeze(0).squeeze(0)
-            attn_block.rel_pos_h = nn.Parameter(new_rel_pos_h)
-
-            # Resize rel_pos_w
-            old_rel_pos_w = attn_block.rel_pos_w
-            new_rel_pos_w = F.interpolate(
-                old_rel_pos_w.unsqueeze(0).unsqueeze(0),
-                size=(new_size, old_rel_pos_w.size(1)),
-                mode='bilinear',
-                align_corners=False
-            ).squeeze(0).squeeze(0)
-            attn_block.rel_pos_w = nn.Parameter(new_rel_pos_w)
 
         
-    def forward(self, x):
-        orig_input = x
+    def forward(self, img, mask):
+        orig_input_img = img      # shape = (2, 3, 512, 512)
+        orig_input_mask = mask    # shape = (2, 29, 512, 512)
         
-        # 이미지 임베딩 얻기
-        image_embeddings = self.image_encoder(x)
+        input_images = self.preprocess(img)      # shape = (2, 3, 1024, 1024)
+        image_embeddings = self.image_encoder(input_images)      # shape = (2, 256, 64, 64)
         
-        # 마스크가 3채널(RGB)이라면 그레이스케일로 변환
-        masks = x.mean(dim=1, keepdim=True)  # Convert RGB to grayscale by averaging the channels
-
+        print(f"- orig_input_img shape: {orig_input_img.shape}")
+        print(f"- orig_input_mask shape: {orig_input_mask.shape}")
+        print(f"- input_images shape: {input_images.shape}")
+        print(f"- image_embeddings shape: {image_embeddings.shape}")
+        
         
         # 프롬프트 임베딩 얻기
         sparse_embeddings, dense_embeddings = self.prompt_encoder(
             points=None,
             boxes=None,
-            masks=masks  # 마스크 사용
+            masks=mask  # 마스크 사용
         )
         
-        # dense_prompt_embeddings의 크기를 image_embeddings의 크기와 맞추기
-        dense_prompt_embeddings_resized = F.interpolate(
-            dense_embeddings, 
-            size=(image_embeddings.shape[2], image_embeddings.shape[3]), 
-            mode='bilinear', 
-            align_corners=False
-        )
 
         
         # print(f"image_embeddings shape: {image_embeddings.shape}")
-        # print(f"sparse_embeddings shape: {sparse_embeddings.shape}")
-        # print(f"dense_embeddings shape: {dense_embeddings.shape}")
+        print(f"sparse_embeddings shape: {sparse_embeddings.shape}")
+        print(f"dense_embeddings shape: {dense_embeddings.shape}")
         # print(f"dense_prompt_embeddings_resized shape: {dense_prompt_embeddings_resized.shape}")
 
-
-        # # 각 텐서의 채널 수 출력
-        # print(f"image_embeddings shape: {image_embeddings.shape}, channels: {image_embeddings.shape[1]}")
-        # print(f"sparse_embeddings shape: {sparse_embeddings.shape}, channels: {sparse_embeddings.shape[1]}")
-        # print(f"dense_embeddings shape: {dense_embeddings.shape}, channels: {dense_embeddings.shape[1]}")
-        # print(f"dense_prompt_embeddings_resized shape: {dense_prompt_embeddings_resized.shape}, channels: {dense_prompt_embeddings_resized.shape[1]}")
-        # print(f"prompt_encoder.get_dense_pe shape: {self.prompt_encoder.get_dense_pe().shape}")
-    
         
         # 마스크 디코딩
         low_res_masks, iou_predictions = self.mask_decoder(
             image_embeddings=image_embeddings,
             image_pe=self.prompt_encoder.get_dense_pe(),
             sparse_prompt_embeddings=sparse_embeddings,
-            dense_prompt_embeddings=dense_prompt_embeddings_resized,
+            dense_prompt_embeddings=dense_embeddings,
             multimask_output=True,
         )
         
         masks = self.postprocess_masks(
             low_res_masks,
             input_size=low_res_masks.shape[-2:],
-            original_size=orig_input.shape[-2:]
+            original_size=orig_input_img.shape[-2:]
         )
         # masks = masks > self.mask_threshold
         # sigmoid = torch.nn.Sigmoid()
@@ -197,3 +145,17 @@ class SAM(nn.Module):
         masks = masks[..., : input_size[0], : input_size[1]]
         masks = F.interpolate(masks, original_size, mode="bilinear", align_corners=False)
         return masks
+    
+    def preprocess(self, x: torch.Tensor) -> torch.Tensor:
+        """Normalize pixel values and pad to a square input."""
+        batch_size, c, h, w = x.shape
+    
+        # Normalize colors
+        x = (x - self.pixel_mean) / self.pixel_std
+
+        # Pad
+        padh = self.image_encoder.img_size - h
+        padw = self.image_encoder.img_size - w
+        x = F.pad(x, (0, padw, 0, padh))
+        
+        return x
