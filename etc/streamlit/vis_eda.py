@@ -11,6 +11,8 @@ from sklearn.manifold import TSNE
 import cv2
 from PIL import Image
 
+from time import time
+
 class VisualizeMetaData():
     def __init__(self, xlsx_path) -> None:
         self.xlsx_path = xlsx_path
@@ -70,7 +72,7 @@ class VisualizeImageAndAnnotation():
             'finger-11', 'finger-12', 'finger-13', 'finger-14', 'finger-15',
             'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
             'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
-            'Triquetrum', 'Pisiform', 'Radius', 'Ulna',
+            'Triquetrum', 'Pisiform', 'Radius', 'Ulna'
         ]
         
         self.palette = [
@@ -102,6 +104,9 @@ class VisualizeImageAndAnnotation():
                                 self.classes,
                                 self.class2ind)
         
+        self.vis_path = None
+        self.curr_sort = "None"
+        
     @staticmethod
     def load_pngs(image_root: str) -> set:
         return {
@@ -130,7 +135,15 @@ class VisualizeImageAndAnnotation():
     
     def set_csv(self, csv_path: str) -> None:
         self.csv_pd = self.load_csv(csv_path, self.img_to_path)
-    
+        
+    def set_config_path(self, config_path) -> None:
+        if os.path.join(config_path, "vis_csv") != self.vis_path:
+            self.vis_path = os.path.join(config_path, "vis_csv")
+            
+            self.pred_csv = pd.read_csv(os.path.join(self.vis_path, "pred.csv"))
+            self.dice_csv = pd.read_csv(os.path.join(self.vis_path, "dice.csv"))
+            self.dice_csv['avg_dice'] = self.dice_csv.loc[:, self.dice_csv.columns != 'file_path'].mean(axis=1)
+            
     def get_train_count(self):
         return len(self.jsons)
     
@@ -146,17 +159,12 @@ class VisualizeImageAndAnnotation():
         
         st.image(image, caption=f"{self.pngs[idx]}")
     
-    def plot_gt_and_pred(self):
-        pass
-    
     def plot_train_annotation(self, idx: int): 
         image, label = self.xraydataset[idx]
-        image = image.numpy().transpose(1, 2, 0)
-        label = label.numpy()
         
         image = (image * 255).astype(np.uint8)
         
-        label_rgb = self.label2rgb2(label)
+        label_rgb = self.label2rgb(label)
         
         fig, ax = plt.subplots(1, 1, figsize=(10, 5))
         ax.imshow(image)
@@ -164,10 +172,72 @@ class VisualizeImageAndAnnotation():
         ax.axis("off")
         
         # Streamlit에 이미지 표시
+        
         st.pyplot(fig)
         
-    
-    def plot_pred_only(self, idx: int):
+    def plot_gt_and_pred(self, idx: int, sort_order: str, sort_class: str) -> None:
+        if self.curr_sort != sort_order:
+            if sort_order == "Ascending":
+                self.dice_csv = self.dice_csv.sort_values(by=sort_class, ascending=True)
+            elif sort_order == "Descending":
+                self.dice_csv = self.dice_csv.sort_values(by=sort_class, ascending=False)
+        
+        st.title("Segmentation Visualization")
+        st.header(f"Comparing Ground Truth and Prediction for {self.dice_csv.iloc[idx].iloc[0]}")
+        grouped = self.pred_csv.groupby("file_path")
+        
+        image_path = os.path.join(self.img_root, self.dice_csv.iloc[idx].iloc[0])
+        
+        col1, col2 = st.columns(2)
+        
+        image = np.array(Image.open(image_path).convert('RGB'))
+        height, width = image.shape[:2]
+        mask = np.zeros((len(self.palette), height, width), dtype=np.uint8)
+        
+        with col1:
+            for _, row in grouped.get_group(self.dice_csv.iloc[idx].iloc[0]).iterrows():
+                class_name, rle = row['class'], row['gt_rle']
+                decoded_mask = self.rle_decode(rle, (height, width))
+                mask[self.class2ind[class_name]] = decoded_mask
+            color_mask = self.label2rgb(mask)
+            blended = cv2.addWeighted(image, 0.5, color_mask, 0.5, 0)
+            blended = Image.fromarray(blended)
+            st.image(blended, caption=f"{self.dice_csv.iloc[idx].iloc[0]}")
+            
+        with col2:
+            for _, row in grouped.get_group(self.dice_csv.iloc[idx].iloc[0]).iterrows():
+                class_name, rle = row['class'], row['rle']
+                decoded_mask = self.rle_decode(rle, (height, width))
+                mask[self.class2ind[class_name]] = decoded_mask
+            color_mask = self.label2rgb(mask)
+            blended = cv2.addWeighted(image, 0.5, color_mask, 0.5, 0)
+            blended = Image.fromarray(blended)
+            st.image(blended, caption=f"{self.dice_csv.iloc[idx].iloc[0]}")
+        
+        dice_ = self.dice_csv.iloc[idx].drop('file_path').reset_index()
+        
+        dice_.columns = ['Class', 'Dice Score']
+
+        class_colors = {c : f"rgb{self.palette[self.class2ind[c]]}" for c in self.classes}
+        class_colors['avg_dice'] = f"rgb(255, 255, 255)"
+        
+        st.title("Dice Value Table")
+        
+        def split_into_chunks(df, chunk_size=10):
+            return [df.iloc[i:i+chunk_size].reset_index(drop=True) for i in range(0, len(df), chunk_size)]
+        
+        chunks = split_into_chunks(dice_, chunk_size=10)
+        
+        if len(chunks) > 0:
+            col1, col2, col3 = st.columns([1, 1, 1])
+            cols = [col1, col2, col3]
+            for i, chunk in enumerate(chunks):
+                with cols[i % 3]:
+                    # chunk.index = [f"{i%3 * 10 + j}" for j in range(len(chunk))]
+                    chunk['Col'] = chunk['Class'].apply(lambda x: f"<div style='width: 15px; height: 15px; background-color: {class_colors[x]}; border-radius: 50%;'></div>")
+                    st.write(chunk.to_html(escape=False, index=False), unsafe_allow_html=True)
+        
+    def plot_pred_only(self, idx: int) -> None:
         grouped = self.csv_pd.groupby("image_name")
         
         image_path = os.path.join(self.test_root, self.tests[idx])
@@ -181,24 +251,18 @@ class VisualizeImageAndAnnotation():
             decoded_mask = self.rle_decode(rle, (height, width))
             mask[self.class2ind[class_name]] = decoded_mask
         
-        color_mask = self.label2rgb(mask, height, width)
+        color_mask = self.label2rgb(mask)
         blended = cv2.addWeighted(image, 0.5, color_mask, 0.5, 0)
         blended = Image.fromarray(blended)
         st.image(blended, caption=f"{self.tests[idx]}")
 
-    def label2rgb2(self, label):
+    def label2rgb(self, label):
         image_size = label.shape[1:] + (3, )
         image = np.zeros(image_size, dtype=np.uint8)
         
         for i, class_label in enumerate(label):
             image[class_label == 1] = self.palette[i]
             
-        return image
-    
-    def label2rgb(self, label: np.ndarray, height: int, width: int) -> np.ndarray:
-        image = np.zeros((height, width, 3), dtype=np.uint8)
-        for i, class_mask in enumerate(label):
-            image[class_mask == 1] = self.palette[i]
         return image
     
     @staticmethod
@@ -264,11 +328,7 @@ class XRayDataset(Dataset):
             image = result["image"]
             label = result["mask"] if self.is_train else label
 
-        image = image.transpose(2, 0, 1) 
         label = label.transpose(2, 0, 1)
-        
-        image = torch.from_numpy(image).float()
-        label = torch.from_numpy(label).float()
             
         return image, label
         
@@ -279,5 +339,6 @@ if __name__=="__main__":
     test_root = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/data/test/DCM"
     csv_path = "/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/outputs/saved_models/temp_2020/output_baseline_100ep.csv"
     a = VisualizeImageAndAnnotation(img_root, label_root, test_root, csv_path)
-    a.plot_pred_only(0)
+    a.set_config_path("outputs/dev_smp_unet_kh")
+    a.plot_gt_and_pred(0, "Ascending", "avg_dice")
     

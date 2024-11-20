@@ -5,12 +5,20 @@ import seaborn as sns
 
 from vis_eda import VisualizeMetaData, VisualizeImageAndAnnotation
 
+from time import time
+
 if "train_df" not in st.session_state:
     st.session_state.train_df = pd.DataFrame()
 if "output_df" not in st.session_state:
     st.session_state.output_df = pd.DataFrame()
 if "flag" not in st.session_state:
     st.session_state.flag = False
+    
+columns = ['avg_dice', 'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+           'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10', 'finger-11',
+           'finger-12', 'finger-13', 'finger-14', 'finger-15', 'finger-16', 'finger-17',
+           'finger-18', 'finger-19', 'Trapezium', 'Trapezoid', 'Capitate', 'Hamate',
+           'Scaphoid', 'Lunate', 'Triquetrum', 'Pisiform', 'Radius', 'Ulna']
 
 st.sidebar.success("🔥HotCLIP")
 # st.markdown("<h2 style='text-align: center;'>Segmentation</h2>", unsafe_allow_html=True)
@@ -57,7 +65,9 @@ elif option == "visualize images & annotations":
     elif sub_option == "image with annotation":
         pass
     elif sub_option == "ground truth & prediction":
-        pred_path = st.sidebar.text_input("Enter the pred csv path", "outputs/saved_models/temp_2020/output_baseline_100ep.csv")
+        config_path = st.sidebar.text_input("Enter the config path", "outputs/dev_smp_unet_kh")
+        sort_order = st.sidebar.radio("Select sort order:", ("None", "Ascending", "Descending"))
+        sort_class = st.sidebar.selectbox("Select class to sort", columns)
     elif sub_option == "prediction only":
         pred_path = st.sidebar.text_input("Enter the pred csv path", "outputs/saved_models/temp_2020/output_baseline_100ep.csv")
         
@@ -67,81 +77,24 @@ elif option == "visualize images & annotations":
         st.session_state.flag = True
     
     if st.session_state.flag:
-        eda = st.session_state.eda
         if sub_option in {'image only', 'image with annotation'}:
-            index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=eda.get_train_count()-1, step=1)
+            index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.eda.get_train_count()-1, step=1)
             
             if sub_option == "image only":
-                eda.plot_base_img(index)
+                st.session_state.eda.plot_base_img(index)
             elif sub_option == "image with annotation":
-                eda.plot_train_annotation(index)
+                st.session_state.eda.plot_train_annotation(index)
             
         else:
-            index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=eda.get_test_count()-1, step=1)
-            eda.set_csv(pred_path)
-            eda.plot_pred_only(index)
+            if sub_option == "ground truth & prediction":
+                index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.eda.get_test_count()-1, step=1)
+                st.session_state.eda.set_config_path(config_path)
+                st.session_state.eda.plot_gt_and_pred(index, sort_order, sort_class)
+                
+            elif sub_option == "prediction only":
+                index = st.sidebar.number_input("Enter image index:", min_value=0, max_value=st.session_state.eda.get_test_count()-1, step=1)
+                st.session_state.eda.set_csv(pred_path)
+                st.session_state.eda.plot_pred_only(index)
             
-        
 else:
     pass
-
-# if option == "visualize images":
-#     with st.sidebar.form(key="json_form"):
-#         json_path = st.text_input("json file path")
-#         submit_button = st.form_submit_button("OK")
-#         if submit_button:
-#             try:
-#                 st.session_state.train_df = load_json.load_df(json_path)
-#                 st.sidebar.success("json file load successed :)")
-#             except Exception as e:
-#                 st.sidebar.error("json file load failed :(")
-#     if st.session_state.train_df.empty:
-#         st.stop()
-#     st.session_state.image_ids = [img_id for img_id in st.session_state.train_df.groupby("image_id")["image_id"].first().tolist()]
-#     image_count = st.sidebar.slider('Select image count', 1, 4, 1)
-#     image_index = st.sidebar.slider('Select image index', 0, len(st.session_state.image_ids)-image_count, 0)
-#     image_index_input = st.sidebar.number_input('Enter image index', min_value=0, max_value=len(st.session_state.image_ids)-image_count, value=image_index, step=image_count)
-#     if image_index != image_index_input:
-#         image_index = image_index_input
-#     image_ids = [st.session_state.image_ids[i] for i in range(image_index, image_index + image_count)]
-#     with st.sidebar.form(key="image name form"):
-#         image_name = st.text_input("Enter image name")
-#         submit_button = st.form_submit_button("OK")
-#         if submit_button:
-#             try:
-#                 image_ids = [image_name]
-#             except Exception as e:
-#                 st.sidebar.error("failed :(")
-#     visualize_json.show(st.session_state.train_df, image_ids, json_path)
-
-# elif option == "visualize csv":
-#     with st.sidebar.form(key="csv_form"):
-#         csv_path = st.text_input("csv file path")
-#         submit_button = st.form_submit_button("OK")
-#         if submit_button:
-#             try:
-#                 st.session_state.output_df = load_json.load_df(csv_path)
-#                 st.sidebar.success("csv file load successed :)")
-#             except Exception as e:
-#                 st.sidebar.error("csv file load failed :(")
-#     if st.session_state.output_df.empty:
-#         st.stop()
-#     st.session_state.image_ids = [img_id for img_id in st.session_state.output_df.groupby("image_id")["image_id"].first().tolist()]
-#     image_count = st.sidebar.slider('Select image count', 1, 4, 1)
-#     image_index = st.sidebar.slider('Select image index', 0, len(st.session_state.image_ids)-image_count, 0)
-#     image_index_input = st.sidebar.number_input('Enter image index', min_value=0, max_value=len(st.session_state.image_ids)-image_count, value=image_index, step=image_count)
-#     if image_index != image_index_input:
-#         image_index = image_index_input
-#     image_ids = [st.session_state.image_ids[i] for i in range(image_index, image_index + image_count)]
-#     with st.sidebar.form(key="image name form"):
-#         image_name = st.text_input("Enter image name")
-#         submit_button = st.form_submit_button("OK")
-#         if submit_button:
-#             try:
-#                 image_ids = [image_name]
-#             except Exception as e:
-#                 st.sidebar.error("failed :(")
-#     visualize_csv.show(st.session_state.output_df, image_ids)
-
-# else:
-#     pass

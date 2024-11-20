@@ -58,6 +58,9 @@ class XRayDataset(Dataset):
             _filenames = np.array(pngs)
             _labelnames = np.array(jsons)
             
+            self.filenames = _filenames
+            self.labelnames = _labelnames
+            
             # split train-valid
             # 한 폴더 안에 한 인물의 양손에 대한 `.dcm` 파일이 존재하기 때문에
             # 폴더 이름을 그룹으로 해서 GroupKFold를 수행합니다.
@@ -184,6 +187,12 @@ class XRayDataset(Dataset):
             for fname in files
             if os.path.splitext(fname)[1].lower() == ".json"
         }
+        
+    def get_filepath(self, idx: int) -> tuple[str, str]:
+        return self.filenames[idx], self.labelnames[idx]
+    
+    def get_all_path(self):
+        return self.filenames, self.labelnames
             
 if __name__ == "__main__":
 
