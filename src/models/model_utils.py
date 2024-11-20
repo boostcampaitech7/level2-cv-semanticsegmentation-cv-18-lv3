@@ -10,7 +10,7 @@ import segmentation_models_pytorch as smp
 from .unet import UNetResNet34 
 from .SAM2UNet import get_sam2unet
 from .smp_utils import get_smp_model
-from .deeplabv3 import DeepLabV3_scratch
+from .deeplabv3 import DeepLabV3
 
 from ..utils.loss import *
 
@@ -91,7 +91,7 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
         model = get_sam2unet(model_name)  
 
     elif model_name == "deeplabv3_101_scratch":
-        model = DeepLabV3_scratch(in_channels=3, num_classes=29)
+        model = DeepLabV3(in_channels=3, num_classes=29)
 
     else:
         raise ValueError(f"Unknown model: {model_name}")
