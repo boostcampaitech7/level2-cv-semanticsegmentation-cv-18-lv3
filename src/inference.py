@@ -20,12 +20,13 @@ def run(config):
     IND2CLASS = {v: k for k, v in CLASS2IND.items()}
     output_dir = os.path.join(config['paths']['output_dir'],'output.csv')
     device = torch.device(config['device'])
-
-    model = get_model(config['model'], classes).to(device)
+    
+    model_name = config['model']['name']
+    model = get_model(model_name, classes).to(device)
     
     test_loader = get_inference_loaders(config)
 
-    model_name = config['model']['name']
+    
     model_path = os.path.join(config['paths']['output_dir'], f"{model_name}_best_model.pth")
     
     pth_ = torch.load(model_path, map_location='cpu')

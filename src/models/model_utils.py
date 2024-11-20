@@ -64,15 +64,14 @@ def get_lr_scheduler(optimizer: optim.Optimizer, scheduler_config: Dict[str, Any
     return scheduler
 
 # timm 라이브러리에서 모델 불러오기
-def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
-    model_name = model_config['name']
+def get_model(model_name: str, classes) -> nn.Module:
     num_classes = len(classes)
 
     torchvision_models = {
-        "fcn_50": lambda: models.segmentation.fcn_resnet50(**model_config['config']),
-        "fcn_101": lambda: models.segmentation.fcn_resnet101(**model_config['config']),
-        "deeplabv3_50": lambda: models.segmentation.deeplabv3_resnet50(**model_config['config']),
-        "deeplabv3_101": lambda: models.segmentation.deeplabv3_resnet101(**model_config['config']),
+        "fcn_50": lambda: models.segmentation.fcn_resnet50(pre_trained=True),
+        "fcn_101": lambda: models.segmentation.fcn_resnet101(pre_trained=True),
+        "deeplabv3_50": lambda: models.segmentation.deeplabv3_resnet50(pre_trained=True),
+        "deeplabv3_101": lambda: models.segmentation.deeplabv3_resnet101(pre_trained=True),
     }
 
     if model_name in torchvision_models:
@@ -81,7 +80,7 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
         model.classifier[4] = nn.Conv2d(last_channels, num_classes, kernel_size=1)
         
     elif 'smp_' in model_name:
-        model = get_smp_model(model_config, num_classes)
+        model = get_smp_model(model_name, num_classes)
 
     elif model_name == "myUnet":
         model = UNetResNet34()

@@ -26,7 +26,7 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float
         save_config(config, "./outputs", dev)
     
     device = torch.device(config['device'])
-    model = get_model(config['model'], config['classes']).to(device)
+    model = get_model(config['model']['name'], config['classes']).to(device)
 
     train_loader, val_loader = get_data_loaders(config)
 
