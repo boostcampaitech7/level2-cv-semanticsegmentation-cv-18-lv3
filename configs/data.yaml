@@ -1,8 +1,8 @@
 data:
   base_augmentation:
     resize:
-      width: 512
-      height: 512
+      width: 1024
+      height: 1024
   
   train:
     batch_size: 4
@@ -41,9 +41,23 @@ data:
   inference:
     batch_size: 2
     num_workers: 4
-    tta:
-      HorizontalFlip: {}
-      Scale:
-        scales: [1, 1.2, 1.4]
-      Sharpening :
-        lightness: [0.8, 1.2]
+    # tta:
+    #   HorizontalFlip: {}
+      # VerticalFlit: {}
+      # Rotate90:
+      #   angle: [0, 90, 180, 270]  # List[0, 90, 180, 270]
+      # Scale:
+      #   scales: [1, 1.2, 1.4]         
+      #   interpolation: "bilinear"  # "nearest" / "linear"
+      # Resize:
+      #   sizes: [(512, 512), (1024, 1024)]
+      #   original_size: (1024, 1024)
+      #   interpolation: "bilinear" # "nearest" / "linear"
+      # Add:
+      #   values: []
+      # Multiply:
+      #   factors: []
+      # FiveCrops:
+      #   crop_height: 512
+      #   crop_width: 512
+
