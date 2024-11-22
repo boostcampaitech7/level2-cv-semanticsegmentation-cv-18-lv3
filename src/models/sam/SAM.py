@@ -3,7 +3,7 @@ import torch.nn as nn
 
 import torch.nn.functional as F
 
-from .build_sam import build_sam_vit_b
+from .build_sam import sam_model_registry
 
 import os
 import subprocess
@@ -48,11 +48,12 @@ class SAM(nn.Module):
                  pixel_std: List[float] = [58.395, 57.12, 57.375],
         ) -> None:
         super(SAM, self).__init__()
-        sam = build_sam_vit_b(checkpoint)
+        sam = sam_model_registry['vit_b'](checkpoint='./sam_pretrained/sam_vit_b.pth')
         self.sam = sam
         self.image_encoder = sam.image_encoder
         self.prompt_encoder = sam.prompt_encoder
         self.mask_decoder = sam.mask_decoder
+        
         
         self.register_buffer("pixel_mean", torch.Tensor(pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(pixel_std).view(-1, 1, 1), False)
@@ -65,34 +66,27 @@ class SAM(nn.Module):
         
         self.mask_threshold = 0.5  # 마스크 임계값
         
+        for param in self.image_encoder.parameters():
+            param.requires_grad = False
+        
+        for param in self.prompt_encoder.parameters():
+            param.requires_grad = False
+        
 
         
     def forward(self, img, mask):
         orig_input_img = img      # shape = (2, 3, 512, 512)
-        orig_input_mask = mask    # shape = (2, 29, 512, 512)
+        orig_input_mask = mask    # shape = (2, 1, 512, 512)
         
         input_images = self.preprocess(img)      # shape = (2, 3, 1024, 1024)
         image_embeddings = self.image_encoder(input_images)      # shape = (2, 256, 64, 64)
         
-        print(f"- orig_input_img shape: {orig_input_img.shape}")
-        print(f"- orig_input_mask shape: {orig_input_mask.shape}")
-        print(f"- input_images shape: {input_images.shape}")
-        print(f"- image_embeddings shape: {image_embeddings.shape}")
         
-        
-        # 프롬프트 임베딩 얻기
         sparse_embeddings, dense_embeddings = self.prompt_encoder(
             points=None,
             boxes=None,
             masks=mask  # 마스크 사용
         )
-        
-
-        
-        # print(f"image_embeddings shape: {image_embeddings.shape}")
-        print(f"sparse_embeddings shape: {sparse_embeddings.shape}")
-        print(f"dense_embeddings shape: {dense_embeddings.shape}")
-        # print(f"dense_prompt_embeddings_resized shape: {dense_prompt_embeddings_resized.shape}")
 
         
         # 마스크 디코딩
@@ -104,11 +98,14 @@ class SAM(nn.Module):
             multimask_output=True,
         )
         
+        
         masks = self.postprocess_masks(
             low_res_masks,
             input_size=low_res_masks.shape[-2:],
             original_size=orig_input_img.shape[-2:]
         )
+        
+        
         # masks = masks > self.mask_threshold
         # sigmoid = torch.nn.Sigmoid()
         # masks = sigmoid(masks)
@@ -145,6 +142,7 @@ class SAM(nn.Module):
         masks = masks[..., : input_size[0], : input_size[1]]
         masks = F.interpolate(masks, original_size, mode="bilinear", align_corners=False)
         return masks
+    
     
     def preprocess(self, x: torch.Tensor) -> torch.Tensor:
         """Normalize pixel values and pad to a square input."""
