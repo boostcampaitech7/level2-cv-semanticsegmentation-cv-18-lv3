@@ -103,7 +103,20 @@ def _build_sam(
     if checkpoint is not None:
         with open(checkpoint, "rb") as f:
             state_dict = torch.load(f)
-        state_dict = {k : v for k,v in state_dict.items() 
-                      if 'iou_prediction_head' not in k and 'mask_tokens' not in k}
+
+        exclude_keys = [
+            'mask_tokens.weight', 
+            'iou_prediction_head.layers.2.weight', 
+            'iou_prediction_head.layers.2.bias',
+        ]
+
+        state_dict = {k: v for k, v in state_dict.items() 
+                      if not any(key in k for key in exclude_keys)}
+
+
         sam.load_state_dict(state_dict, strict=False)
+        
+    else:
+        print('No checkpoint loaded')
+        
     return sam
