@@ -16,7 +16,7 @@ from src.utils.logger import WandbLogger, save_config
 from typing import Any, Dict
 
 
-def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float:
+def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool, webhook: bool) -> float:
     model_name = config['model']['name']
     threshold = config['train']['threshold']
 
@@ -96,12 +96,8 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float
             break
     
     wandb.finish_wandb()
-    slack_webhook_url = config['webhook']['url']
-    message  = f"Training is done!\nBest val metric :{best_val_metric :.4f}"
     
-    try:
-        send_slack_notification(config, slack_webhook_url, message)
-        print(f"slack 알람 성공")
-    except Exception as e:
-        print(f"Slack 알림 전송 실패: {e}")
+    if webhook :
+        send_slack_notification(config, best_val_metric)
+
     return best_val_metric
