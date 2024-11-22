@@ -8,16 +8,28 @@ train:
   # accuracy / f1 / precision / recall / mse / dice_coef
 
   criterion: 
-    name: "bce+dice"
+    name: "focal+dice"
   # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice / unet3p
 
   optimizer:
-    name: "Adam"
+    name: "AdamW"
     # Adam / SGD / AdamW
     config:
-      weight_decay: 1.e-6
+      weight_decay: 1.e-1
       # momentum: 0.9
-      lr: 1.e-3
+      lr: 1.e-4
+
+  # lr_scheduler:
+  #   name: "CosineAnnealingWarmupRestarts"
+  #   monitor: "metric"
+  #   config:
+  #     # factor: 0.1
+  #     # patience: 20
+  #     first_cycle_steps: 20
+  #     min_lr: 1.e-6
+  #     max_lr: 8.e-4
+  #     # verbose: True
+  #     warmup_steps: 3.2e-6
 
   lr_scheduler:
     name: "ReduceLROnPlateau"
@@ -25,8 +37,11 @@ train:
     config:
       factor: 0.1
       patience: 20
+      # first_cycle_steps: 20
       min_lr: 1.e-6
+      # max_lr: 8.e-4
       verbose: True
+      # warmup_steps: 3.2e-6
 
   early_stopping:
     patience: 5
@@ -43,12 +58,12 @@ model:
   # encoder: resnet34 / resnet101 / efficientnet-b[0-7] / tu-maxvit_tiny_tf512 
   # ex : smp_unet++_efficientnet-b5
 
-  # 이외 : myUnet / sam2unet_[tiny,base,large] / sam_[b, h, l]
+  # 이외 : myUnet / sam2unet_[tiny,base,large] / sam_[b,h,l]
 
   config:
     pretrained: True
   
 
 webhook : 
-  url : "https://hooks.slack.com/services/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"
-  
+  # url : "https://hooks.slack.com/services/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"
+  url : "https://hooks.slack.com/services/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"

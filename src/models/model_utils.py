@@ -12,6 +12,7 @@ from .smp_utils import get_smp_model
 from ..utils.loss import *
 
 from .sam.SAM import get_sam
+from .sam.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
@@ -58,6 +59,9 @@ def get_lr_scheduler(optimizer: optim.Optimizer, scheduler_config: Dict[str, Any
             mode=mode,
             **scheduler_config['config']
         )
+    elif scheduler_name == 'CosineAnnealingWarmupRestarts':
+        # first_cycle_steps, cycle_mult, max_lr, min_lr, warmup_steps, gamma
+        scheduler = CosineAnnealingWarmupRestarts(optimizer, **scheduler_config['config'])
     else:
         raise ValueError(f"Unknown scheduler: {scheduler_name}")
 
