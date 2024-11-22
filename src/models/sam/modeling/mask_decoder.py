@@ -48,7 +48,7 @@ class MaskDecoder(nn.Module):
 
         self.iou_token = nn.Embedding(1, transformer_dim)
         self.num_mask_tokens = num_multimask_outputs + 1
-        print(f"self.num_mask_tokens = {self.num_mask_tokens}")
+        # print(f"self.num_mask_tokens = {self.num_mask_tokens}")
         self.mask_tokens = nn.Embedding(self.num_mask_tokens, transformer_dim)
 
         self.output_upscaling = nn.Sequential(
@@ -124,9 +124,14 @@ class MaskDecoder(nn.Module):
         output_tokens = output_tokens.unsqueeze(0).expand(sparse_prompt_embeddings.size(0), -1, -1)
         tokens = torch.cat((output_tokens, sparse_prompt_embeddings), dim=1)
 
+        # print(f"- image_embeddings shape: {image_embeddings.shape}")
         # Expand per-image data in batch direction to be per-mask
         # src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
-        # dense_prompt_embeddings_resized = dense_prompt_embeddings.repeat_interleave(src.shape[0] // dense_prompt_embeddings.shape[0], dim=0)
+        # print(f"- src shape: {src.shape}")
+        # print(f"- dense_prompt_embeddings shape: {dense_prompt_embeddings.shape}")
+        # print(f"- tokens shape: {tokens.shape}")
+        
+        # print(f"image_embeddings shape: {image_embeddings.shape}")
         src = image_embeddings + dense_prompt_embeddings
         pos_src = torch.repeat_interleave(image_pe, tokens.shape[0], dim=0)
         b, c, h, w = src.shape
@@ -161,7 +166,7 @@ class MLP(nn.Module):
         hidden_dim: int,
         output_dim: int,
         num_layers: int,
-        sigmoid_output: bool = True,
+        sigmoid_output: bool = False,
     ) -> None:
         super().__init__()
         self.num_layers = num_layers

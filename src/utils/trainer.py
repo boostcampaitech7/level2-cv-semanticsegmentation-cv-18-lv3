@@ -1,5 +1,7 @@
 import torch
 import torch.nn.functional as F
+from torch.nn.functional import threshold, normalize
+
 from tqdm import tqdm
 import os
 import numpy as np
@@ -37,7 +39,6 @@ def train_one_epoch(
             mask = conv_layer(masks)  # Convert 29 channels to 1 channel
             downscale_transform = T.Resize((256, 256))
 
-            # 예시 입력 이미지에 변환 적용
             downscaled_mask = downscale_transform(mask)
             outputs = model(inputs, downscaled_mask)
         else:
@@ -45,7 +46,12 @@ def train_one_epoch(
         
          # 모델 출력이 딕셔너리인 경우 처리
         logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
-
+        # for name, params in model.named_parameters():
+        #     print(f"name: {name}, params: {params.requires_grad}")
+            # print(params)
+            
+        # binary_mask = normalize(threshold(logits, 0.0, 0)).to(device)
+        
         loss = criterion(logits, masks)
         loss.backward()
         optimizer.step()

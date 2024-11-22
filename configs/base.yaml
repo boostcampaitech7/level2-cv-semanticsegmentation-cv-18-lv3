@@ -14,7 +14,7 @@ classes:  [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
 
 # wandb 사용을 원치 않으신다면 아래 wandb 부분을 다 주석 처리해주세요.
-wandb:
-  user_name: "mj" #본인 id 적기
-  team_name: "dkvltmxhf-hotclip"
-  experiment: "" # 무슨 실험인지
+# wandb:
+#   user_name: "mj" #본인 id 적기
+#   team_name: "dkvltmxhf-hotclip"
+#   experiment: "SAM_cosineAnnealing_warmup" # 무슨 실험인지

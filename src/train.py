@@ -22,8 +22,8 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool) -> float
 
     wandb = WandbLogger(config, resume)
 
-    if not(resume):
-        save_config(config, "./outputs", dev)
+    # if not(resume):
+    #     save_config(config, "./outputs", dev)
     
     device = torch.device(config['device'])
     model = get_model(config['model'], config['classes']).to(device)
