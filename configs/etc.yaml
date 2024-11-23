@@ -1,9 +1,14 @@
 ensemble:
-  method: soft
-  # soft / hard
-
-  model_folders = ["outputs/20241116_162437_smp_unet++_hg", "outputs/hkkim"]
-
+  method: soft  # soft / hard
+  model_folders:
+    - "outputs/20241116_162437_smp_unet++_hg"
+    - "outputs/hkkim"
+  models_folders:
+    512:
+      - "outputs/20241119_022910_smp_unet++_resnet34_hg"
+    1024:
+      - "outputs/20241116_162437_smp_unet++_hg"
+      - "outputs/hkkim"
 
   # TODO
   #models_folders: 
