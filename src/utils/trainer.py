@@ -30,11 +30,13 @@ def train_one_epoch(
 
     for batch in tqdm(dataloader, desc="Training"):
         inputs, masks = batch
-        inputs, masks = inputs.to(device), masks.to(device)
-
+        inputs[0], masks[0] = inputs[0].to(device), masks[0].to(device)
+        # print(inputs.shape)
+        # print(masks.shape)
         optimizer.zero_grad()
         if model_name == 'clipseg':
             cond = prepare_conditional(inputs)
+            print(cond)
             visual_q = None
             outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
         else : 
@@ -44,6 +46,8 @@ def train_one_epoch(
         logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
         if model_name == 'clipseg':
+            print(logits.shape)
+            print(masks[0].shape)
             loss = criterion(logits, masks[0])
         else :
             loss = criterion(logits, masks)

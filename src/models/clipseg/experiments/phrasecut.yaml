@@ -16,7 +16,8 @@ configuration:
   val_interval: null
 
   # dataset
-  dataset: src.models.clipseg.datasets.phrasecut.PhraseCut   # <-----------------
+  #dataset: src.datasets.clipseg_dataset.XRayDataset
+  dataset: src.models.clipseg.datasets.dataset.XRayDataset   # <-----------------
   split_mode: pascal_test
   split: train
   mask: text_and_crop_blur_highlight352
