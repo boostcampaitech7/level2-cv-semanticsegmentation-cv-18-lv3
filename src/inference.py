@@ -43,6 +43,7 @@ def run(config):
             images = images.to(device)
 
             outputs = model(images)
+
             if isinstance(outputs, tuple) :
                 outputs, *_ = outputs
             outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs

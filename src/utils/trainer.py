@@ -64,7 +64,8 @@ def validate(
             device: torch.device,
             metric_fn: Any,
             classes: list,
-            threshold: float = 0.5
+            model_name: str,
+            threshold: float = 0.5,
         ) -> Tuple[float, float]:
     
     model.eval()
@@ -75,7 +76,13 @@ def validate(
         for batch in tqdm(dataloader, desc="Validating"):
             inputs, masks = batch
             inputs, masks = inputs.to(device), masks.to(device)
-            outputs = model(inputs)
+            # outputs = model(inputs)
+            if model_name == 'clipseg':
+                cond = prepare_conditional(inputs)
+                visual_q = None
+                outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
+            else :
+                outputs = model(inputs)
 
             if isinstance(outputs, tuple) :
                 logits, logits1, logits2 = outputs
@@ -94,10 +101,12 @@ def validate(
                     logits1 = F.interpolate(logits1, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
                     logits2 = F.interpolate(logits2, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
 
+            mask_input = masks[0] if model_name == 'clipseg' else masks
+
             if use_multiple_outputs:
-                loss = criterion((logits, logits1, logits2), masks)
+                loss = criterion((logits, logits1, logits2), mask_input)
             else:
-                loss = criterion(logits, masks)
+                loss = criterion(logits, mask_input)
             
             total_loss += loss.item()
 

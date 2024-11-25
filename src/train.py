@@ -57,7 +57,7 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool, webhook:
         # train
         train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device, model_name=config['model']['name'])
         # validation
-        val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'] ,threshold)
+        val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'], threshold, model_name=config['model']['name'])
         
         # 현재 학습률 가져오기 
         current_lr = optimizer.param_groups[0]['lr']

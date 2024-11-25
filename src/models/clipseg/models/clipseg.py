@@ -535,4 +535,3 @@ class CLIPSegMultiLabel(nn.Module):
         return out
 
         # construct output tensor
-                    
