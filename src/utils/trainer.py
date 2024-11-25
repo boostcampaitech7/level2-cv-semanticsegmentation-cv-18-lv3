@@ -36,7 +36,7 @@ def train_one_epoch(
         if model_name == 'clipseg':
             cond = prepare_conditional(inputs)
             visual_q = None
-            outputs, visual_q, _, _ = model(inputs[0])
+            outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
         else : 
             outputs = model(inputs)
         
