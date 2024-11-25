@@ -1,9 +1,9 @@
 paths:
   output_dir: "./outputs/"
 
-  train_image_root: "./data/train/DCM_all"
+  train_image_root: "./data/train/DCM"
   # train_image_root : "./data/train/DCM" , 증강 데이터 적용 시 : "./data/train/DCM_all"
-  train_label_root: "./data/train/outputs_json_all"
+  train_label_root: "./data/train/outputs_json"
   # train_label_root :  "./data/train/outputs_json", 증강 데이터 적용 시 : "./data/train/outputs_json_all"
 
   inference_image_root: "./data/test/DCM"

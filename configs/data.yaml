@@ -1,8 +1,8 @@
 data:
   base_augmentation:
     resize:
-      width: 512
-      height: 512
+      width: 352
+      height: 352
   
   train:
     batch_size: 4

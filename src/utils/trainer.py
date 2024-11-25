@@ -7,6 +7,8 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from typing import Any, Dict, Tuple
 
+from src.models.CLIPSeg import prepare_conditional
+
 # save model function 
 def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth"):
     os.makedirs(save_dir, exist_ok=True)
@@ -20,6 +22,7 @@ def train_one_epoch(
                 criterion: nn.Module,
                 optimizer: optim.Optimizer,
                 device: torch.device,
+                model_name
             ) -> Tuple[float, float]:
     
     model.train()
@@ -30,12 +33,20 @@ def train_one_epoch(
         inputs, masks = inputs.to(device), masks.to(device)
 
         optimizer.zero_grad()
-        outputs = model(inputs)
+        if model_name == 'clipseg':
+            cond = prepare_conditional(inputs)
+            visual_q = None
+            outputs, visual_q, _, _ = model(inputs[0])
+        else : 
+            outputs = model(inputs)
         
          # 모델 출력이 딕셔너리인 경우 처리
         logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
-        loss = criterion(logits, masks)
+        if model_name == 'clipseg':
+            loss = criterion(logits, masks[0])
+        else :
+            loss = criterion(logits, masks)
         loss.backward()
         optimizer.step()
 
