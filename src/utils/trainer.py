@@ -7,6 +7,8 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from typing import Any, Dict, Tuple
 
+from src.models.CLIPSeg import prepare_conditional
+
 # save model function 
 def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth"):
     os.makedirs(save_dir, exist_ok=True)
@@ -20,6 +22,7 @@ def train_one_epoch(
                 criterion: nn.Module,
                 optimizer: optim.Optimizer,
                 device: torch.device,
+                model_name
             ) -> Tuple[float, float]:
     
     model.train()
@@ -27,15 +30,27 @@ def train_one_epoch(
 
     for batch in tqdm(dataloader, desc="Training"):
         inputs, masks = batch
-        inputs, masks = inputs.to(device), masks.to(device)
-
+        inputs[0], masks[0] = inputs[0].to(device), masks[0].to(device)
+        # print(inputs.shape)
+        # print(masks.shape)
         optimizer.zero_grad()
-        outputs = model(inputs)
+        if model_name == 'clipseg':
+            cond = prepare_conditional(inputs)
+            print(cond)
+            visual_q = None
+            outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
+        else : 
+            outputs = model(inputs)
         
          # 모델 출력이 딕셔너리인 경우 처리
         logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
-        loss = criterion(logits, masks)
+        if model_name == 'clipseg':
+            print(logits.shape)
+            print(masks[0].shape)
+            loss = criterion(logits, masks[0])
+        else :
+            loss = criterion(logits, masks)
         loss.backward()
         optimizer.step()
 
@@ -53,7 +68,8 @@ def validate(
             device: torch.device,
             metric_fn: Any,
             classes: list,
-            threshold: float = 0.5
+            model_name: str,
+            threshold: float = 0.5,
         ) -> Tuple[float, float]:
     
     model.eval()
@@ -64,7 +80,13 @@ def validate(
         for batch in tqdm(dataloader, desc="Validating"):
             inputs, masks = batch
             inputs, masks = inputs.to(device), masks.to(device)
-            outputs = model(inputs)
+            # outputs = model(inputs)
+            if model_name == 'clipseg':
+                cond = prepare_conditional(inputs)
+                visual_q = None
+                outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
+            else :
+                outputs = model(inputs)
 
             if isinstance(outputs, tuple) :
                 logits, logits1, logits2 = outputs
@@ -83,10 +105,12 @@ def validate(
                     logits1 = F.interpolate(logits1, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
                     logits2 = F.interpolate(logits2, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
 
+            mask_input = masks[0] if model_name == 'clipseg' else masks
+
             if use_multiple_outputs:
-                loss = criterion((logits, logits1, logits2), masks)
+                loss = criterion((logits, logits1, logits2), mask_input)
             else:
-                loss = criterion(logits, masks)
+                loss = criterion(logits, mask_input)
             
             total_loss += loss.item()
 

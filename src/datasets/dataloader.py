@@ -5,7 +5,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 from typing import Any
 import albumentations as A
-from src.datasets.dataset import XRayDataset
+#from src.datasets.dataset import XRayDataset
+from src.models.clipseg.datasets.dataset import XRayDataset  
 from src.utils.augmentation import get_transform, load_config # get_augmentation 함수 가져오기
 
 def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
