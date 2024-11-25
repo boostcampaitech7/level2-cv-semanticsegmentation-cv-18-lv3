@@ -11,6 +11,7 @@ from .unet import UNetResNet34
 from .SAM2UNet import get_sam2unet
 from .smp_utils import get_smp_model
 from .deeplabv3 import DeepLabV3
+from src.models.clipseg.models.clipseg import CLIPDensePredT
 
 from ..utils.loss import *
 
@@ -91,6 +92,9 @@ def get_model(model_name: str, classes) -> nn.Module:
 
     elif model_name == "deeplabv3_101_scratch":
         model = DeepLabV3(in_channels=3, num_classes=29)
+
+    elif model_name == 'clipseg':
+        return CLIPDensePredT(version='ViT-B/32', reduce_cond=64, prompt='fixed', classes=num_classes) # classes =29 넣어줘야하나?
 
     else:
         raise ValueError(f"Unknown model: {model_name}")

@@ -7,6 +7,10 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from typing import Any, Dict, Tuple
 
+from torch.cuda.amp import autocast, GradScaler
+from contextlib import nullcontext
+
+
 # save model function 
 def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth"):
     os.makedirs(save_dir, exist_ok=True)
@@ -20,24 +24,50 @@ def train_one_epoch(
                 criterion: nn.Module,
                 optimizer: optim.Optimizer,
                 device: torch.device,
+                scaler: GradScaler = None,
+                use_amp: bool = False,
+                config: Dict[str, Any] = None
             ) -> Tuple[float, float]:
     
     model.train()
     total_loss = 0
 
+    # AMP 및 GradScaler 설정
+    autocast_fn = autocast if use_amp else nullcontext
+
     for batch in tqdm(dataloader, desc="Training"):
-        inputs, masks = batch
+        inputs, masks, texts = batch  # clipseg 사용하려면 texts 추가해야 함
         inputs, masks = inputs.to(device), masks.to(device)
 
         optimizer.zero_grad()
-        outputs = model(inputs)
+
+        with autocast_fn():
+            #  conditional vector 추가
+            if config['mix']: 
+                pass # mix 기능은 사용하지 않을 예정
+            else:
+                # no mix
+                prompts = model.sample_prompts(texts, prompt_list=('a photo of a {}',))
+                # conditional vector 계산
+                cond = model.compute_conditional(prompts)
+                cond = cond.to(device)
+
+
+        outputs = model(inputs, cond)[0] # 모델이 튜플을 반환함. 첫번째 요소만 사용
         
          # 모델 출력이 딕셔너리인 경우 처리
         logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
         loss = criterion(logits, masks)
-        loss.backward()
-        optimizer.step()
+
+        # 역전파 및 옵티마이저 업데이트
+        if scaler is not None:
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            loss.backward()
+            optimizer.step()
 
         total_loss += loss.item()
 
@@ -62,9 +92,15 @@ def validate(
     dices = []
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Validating"):
-            inputs, masks = batch
+            inputs, masks, texts = batch
             inputs, masks = inputs.to(device), masks.to(device)
-            outputs = model(inputs)
+            # texts는 리스트 형태로 모델에 전달될 프롬프트를 의미
+
+            # 프롬프트 생성
+            prompts = model(inputs, prompt_list=('a photo of a {}',))
+
+            # 모델 호출
+            outputs = model(inputs, prompts)[0]
 
             if isinstance(outputs, tuple) :
                 logits, logits1, logits2 = outputs
