@@ -55,7 +55,7 @@ def run(config: Dict[str, Any], resume: bool, pth_path: str, dev: bool, webhook:
     #메인 트레이닝
     for epoch in range(start_epoch, config['train']['num_epochs']):
         # train
-        train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device, config['model']['name'], config['classes'])
+        train_loss= train_one_epoch(model, train_loader, criterion, optimizer, device, config['model']['name'])
         # validation
         val_loss, val_metric = validate(model, val_loader, criterion, device, metric_fn, config['classes'], model_name=config['model']['name'], threshold=threshold)
         
