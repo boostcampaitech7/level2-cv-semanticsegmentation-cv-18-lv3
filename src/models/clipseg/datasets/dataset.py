@@ -1,11 +1,9 @@
-# python native
 import os
 import json
 import random
 import datetime
 from functools import partial
 
-# external library
 import cv2
 import numpy as np
 import pandas as pd
@@ -14,7 +12,6 @@ from sklearn.model_selection import GroupKFold
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-# torch
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -59,24 +56,16 @@ class XRayDataset(Dataset):
             _filenames = np.array(pngs)
             _labelnames = np.array(jsons)
             
-            # split train-valid
-            # 한 폴더 안에 한 인물의 양손에 대한 `.dcm` 파일이 존재하기 때문에
-            # 폴더 이름을 그룹으로 해서 GroupKFold를 수행합니다.
-            # 동일 인물의 손이 train, valid에 따로 들어가는 것을 방지합니다.
             groups = [os.path.dirname(fname) for fname in _filenames]
-            
-            # dummy label
+
             ys = [0 for fname in _filenames]
-            
-            # 전체 데이터의 20%를 validation data로 쓰기 위해 `n_splits`를
-            # 5으로 설정하여 KFold를 수행합니다.
+
             gkf = GroupKFold(n_splits=5)
             
             filenames = []
             labelnames = []
             for i, (x, y) in enumerate(gkf.split(_filenames, ys, groups)):
                 if mode=='train':
-                    # 0번을 validation dataset으로 사용합니다.
                     if i == 0:
                         continue
                         
@@ -86,8 +75,7 @@ class XRayDataset(Dataset):
                 else:
                     filenames = list(_filenames[y])
                     labelnames = list(_labelnames[y])
-                    
-                    # skip i > 0
+
                     break
             
             self.labelnames = labelnames
@@ -108,16 +96,13 @@ class XRayDataset(Dataset):
         image_name = self.filenames[item]
         image_path = os.path.join(self.image_root, image_name)
 
-        # Load image
         image = cv2.imread(image_path)
         image = image / 255.0
 
         if self.mode in ['train', 'val']:
-            # Training/Validation mode
             label_name = self.labelnames[item]
             label_path = os.path.join(self.label_root, label_name)
 
-            # Create segmentation label
             label_shape = tuple(image.shape[:2]) + (len(self.classes),)
             label = np.zeros(label_shape, dtype=np.uint8)
 
@@ -131,13 +116,10 @@ class XRayDataset(Dataset):
                 class_ind = CLASS2IND[c]
                 points = np.array(ann["points"])
 
-                # Create class mask
                 class_label = np.zeros(image.shape[:2], dtype=np.uint8)
                 cv2.fillPoly(class_label, [points], 1)
                 label[..., class_ind] = class_label  # 클래스 인덱스를 사용하여 마스크 할당
 
-                # Append class description as a simple phrase
-              #  phrases.append(c)
                 phrases[class_ind] = c
 
             if self.transforms is not None:
@@ -147,34 +129,34 @@ class XRayDataset(Dataset):
                 image = result["image"]
                 label = result["mask"]
 
-            # Convert to PyTorch tensors
-            image = image.transpose(2, 0, 1)  # Channel-first format
+            image = image.transpose(2, 0, 1) 
             label = label.transpose(2, 0, 1)
 
             image = torch.from_numpy(image).float()
             label = torch.from_numpy(label).float()
 
-            # Target additional info (index and zeros tensor)
             target_additional = (torch.zeros(0), item)
-
-                # return (image, phrases), (label, *target_additional)
         
             data_x = (image,) + (tuple(phrases))
 
             return (data_x), (label, *target_additional)
 
         elif self.mode == 'inference':
-            # Inference mode
+            # inference 시에도 text prompt 필요 
+            # class 이름을 프롬포트로 사용
+            phrases = self.classes
+
             if self.transforms is not None:
                 inputs = {"image": image}
                 result = self.transforms(**inputs)
                 image = result["image"]
             
-            # Convert to PyTorch tensor
-            image = image.transpose(2, 0, 1)  # Channel-first format
+            image = image.transpose(2, 0, 1)  
             image = torch.from_numpy(image).float()
 
-            return image, image_name
+            data_x = (image,) + (tuple(phrases))
+
+            return data_x, image_name
 
         else:
             raise ValueError(f"Unsupported mode: {self.mode}")
