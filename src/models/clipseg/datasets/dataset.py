@@ -112,49 +112,73 @@ class XRayDataset(Dataset):
         image = cv2.imread(image_path)
         image = image / 255.0
 
-        label_name = self.labelnames[item]
-        label_path = os.path.join(self.label_root, label_name)
+        if self.mode in ['train', 'val']:
+            # Training/Validation mode
+            label_name = self.labelnames[item]
+            label_path = os.path.join(self.label_root, label_name)
 
-        # Create segmentation label
-        label_shape = tuple(image.shape[:2]) + (len(self.classes),)
-        label = np.zeros(label_shape, dtype=np.uint8)
+            # Create segmentation label
+            label_shape = tuple(image.shape[:2]) + (len(self.classes),)
+            label = np.zeros(label_shape, dtype=np.uint8)
 
-        with open(label_path, "r") as f:
-            annotations = json.load(f)["annotations"]
+            with open(label_path, "r") as f:
+                annotations = json.load(f)["annotations"]
 
-        phrases = []
-        for ann in annotations:
-            c = ann["label"]
-            class_ind = CLASS2IND[c]
-            points = np.array(ann["points"])
+            phrases = [None] * len(self.classes) 
 
-            # Create class mask
-            class_label = np.zeros(image.shape[:2], dtype=np.uint8)
-            cv2.fillPoly(class_label, [points], 1)
-            label[..., class_ind] = class_label
+            for idx, ann in enumerate(annotations):
+                c = ann["label"]
+                class_ind = CLASS2IND[c]
+                points = np.array(ann["points"])
 
-            # Append class description as a simple phrase
-            phrases.append(c)
+                # Create class mask
+                class_label = np.zeros(image.shape[:2], dtype=np.uint8)
+                cv2.fillPoly(class_label, [points], 1)
+                label[..., class_ind] = class_label  # 클래스 인덱스를 사용하여 마스크 할당
 
-        if self.transforms is not None:
-            inputs = {"image": image, "mask": label}
-            result = self.transforms(**inputs)
+                # Append class description as a simple phrase
+              #  phrases.append(c)
+                phrases[class_ind] = c
 
-            image = result["image"]
-            label = result["mask"]
+            if self.transforms is not None:
+                inputs = {"image": image, "mask": label}
+                result = self.transforms(**inputs)
 
-        # Convert to PyTorch tensors
-        image = image.transpose(2, 0, 1)  # Channel-first format
-        label = label.transpose(2, 0, 1)
+                image = result["image"]
+                label = result["mask"]
 
-        image = torch.from_numpy(image).float()
-        label = torch.from_numpy(label).float()
+            # Convert to PyTorch tensors
+            image = image.transpose(2, 0, 1)  # Channel-first format
+            label = label.transpose(2, 0, 1)
 
-        # Target additional info (index and zeros tensor)
-        target_additional = (torch.zeros(0), item)
+            image = torch.from_numpy(image).float()
+            label = torch.from_numpy(label).float()
 
-        return (image, phrases[0]), (label, *target_additional)
-    
+            # Target additional info (index and zeros tensor)
+            target_additional = (torch.zeros(0), item)
+
+                # return (image, phrases), (label, *target_additional)
+        
+            data_x = (image,) + (tuple(phrases))
+
+            return (data_x), (label, *target_additional)
+
+        elif self.mode == 'inference':
+            # Inference mode
+            if self.transforms is not None:
+                inputs = {"image": image}
+                result = self.transforms(**inputs)
+                image = result["image"]
+            
+            # Convert to PyTorch tensor
+            image = image.transpose(2, 0, 1)  # Channel-first format
+            image = torch.from_numpy(image).float()
+
+            return image, image_name
+
+        else:
+            raise ValueError(f"Unsupported mode: {self.mode}")
+
     def get_pngs(self):
         return {
             os.path.relpath(os.path.join(root, fname), start=self.image_root)
