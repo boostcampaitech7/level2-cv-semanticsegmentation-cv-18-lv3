@@ -23,7 +23,6 @@ def train_one_epoch(
                 optimizer: optim.Optimizer,
                 device: torch.device,
                 model_name: str,
-                classes: list,
             ) -> Tuple[float, float]:
     
     model.train()
@@ -31,43 +30,40 @@ def train_one_epoch(
 
     for batch in tqdm(dataloader, desc="Training"):
         inputs, masks = batch
-        inputs[0], labels = inputs[0].to(device), masks[0].to(device)
-        batch_size, num_classes, height, width = labels.size()
-        # print(inputs.shape)
-        # print(masks.shape)
-        # print(labels.size()) # torch.Size([4, 29, 352, 352])
 
-        # 각 클래스에 대해 반복
-        for class_idx in range(num_classes):
-            optimizer.zero_grad()
-            # 현재 클래스의 바이너리 마스크 추출
-            binary_labels = labels[:, class_idx, :, :].unsqueeze(1) # [batch_size, 1, height, width]
+        if model_name == 'clipseg' : 
+            inputs[0], masks = inputs[0].to(device), masks[0].to(device)
+            _, N, _, _ = masks.size() # N : Nume of Classes
 
-            if model_name == 'clipseg':
-                # 현재 클래스 이름을 배치 크기만큼 복제하여 리스트로 생성
-                phrases = [classes[class_idx]] * batch_size
-                # batch_inputs = (inputs[0], phrases)
+            for i in range(N) :
+                bimasks = masks[:,i,:,:].unsqueeze(1)
+                phrases = inputs[i + 1]
+
+                optimizer.zero_grad()
                 cond = prepare_conditional(phrases)
-                outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
-            else :
-                outputs = model(inputs)
+                outputs, visual_q, _, _ = model(inputs[0], cond, return_features = True)
+
+                logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                loss = criterion(logits, bimasks)
+                loss.backward()
+                optimizer.step()
+
+                total_loss += loss.item()
+
+        else :
+            inputs, masks = inputs.to(device), masks.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(inputs)
 
             logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
-            if model_name == 'clipseg':
-                loss = criterion(logits, binary_labels)
-
-            else:
-                loss = criterion(logits, masks)
+            loss = criterion(logits, masks)
             loss.backward()
             optimizer.step()
 
             total_loss += loss.item()
     
-    if model_name == 'clipseg':
-        epoch_loss = total_loss / (len(dataloader) * num_classes)
-    else:
-        epoch_loss = total_loss / len(dataloader)
-
+    epoch_loss = total_loss / len(dataloader)
 
     return epoch_loss
 
@@ -89,22 +85,38 @@ def validate(
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Validating"):
             inputs, masks = batch
-            inputs[0], labels = inputs[0].to(device), masks[0].to(device)
-            batch_size, num_classes, height, width = labels.shape
 
+            if model_name == 'clipseg' :
+                inputs[0], masks = inputs[0].to(device), masks[0].to(device)
+                _, N, _, _ = masks.size() # N : Nume of Classes
 
-            for class_idx in range(num_classes):
-                # 현재 클래스의 바이너리 마스크 추출
-                binary_labels = labels[:, class_idx, :, :].unsqueeze(1)
+                for i in range(N) :
+                    bimasks = masks[:,i,:,:].unsqueeze(1)
+                    phrases = inputs[i + 1]
 
-                if model_name == 'clipseg':
-                    phrases = [classes[class_idx]] * batch_size
-                    # batch_inputs = (inputs[0], phrases)
                     cond = prepare_conditional(phrases)
-                    outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
-                else :
-                    outputs = model(inputs)
+                    outputs, visual_q, _, _ = model(inputs[0], cond, return_features = True)
 
+                    logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+
+                    logits_h, logits_w = logits.size(-2), logits.size(-1)
+                    labels_h, labels_w = masks.size(-2), masks.size(-1)
+
+                    if logits_h != labels_h or logits_w != labels_w :
+                        logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+
+                    loss = criterion(logits, bimasks)
+                    total_loss += loss.item()
+
+                    probs = torch.sigmoid(logits)
+                    outputs = (probs > threshold)
+
+                    dice = metric_fn.calculate(outputs, bimasks).detach().cpu()
+                    dices.append(dice)
+
+            else :
+                inputs, masks = inputs.to(device), masks.to(device)
+                outputs = model(inputs)
 
                 if isinstance(outputs, tuple) :
                     logits, logits1, logits2 = outputs
@@ -114,7 +126,7 @@ def validate(
                     use_multiple_outputs = False
 
                 logits_h, logits_w = logits.size(-2), logits.size(-1)
-                labels_h, labels_w = labels.size(-2), labels.size(-1)
+                labels_h, labels_w = masks.size(-2), masks.size(-1)
 
                 #출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
                 if logits_h != labels_h or logits_w != labels_w:
@@ -123,13 +135,10 @@ def validate(
                         logits1 = F.interpolate(logits1, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
                         logits2 = F.interpolate(logits2, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
 
-                mask_input = binary_labels   # if model_name == 'clipseg' else labels
-
                 if use_multiple_outputs:
-                    loss = criterion((logits, logits1, logits2), mask_input)
+                    loss = criterion((logits, logits1, logits2), masks)
                 else:
-                    loss = criterion(logits, mask_input)
-            
+                    loss = criterion(logits, masks)
                 total_loss += loss.item()
 
                 probs = torch.sigmoid(logits)
@@ -137,22 +146,15 @@ def validate(
                 # outputs = (probs > threshold).detach().cpu()
                 # masks = masks.detach().cpu()
                 outputs = (probs > threshold)
-
-                if model_name == 'clipseg':
-                    dice = metric_fn.calculate(outputs, binary_labels).detach().cpu()
-                else:
-                    dice = metric_fn.calculate(outputs, labels).detach().cpu()
-                # dice = metric_fn.calculate(outputs, binary_labels).detach().cpu()
+                dice = metric_fn.calculate(outputs, masks).detach().cpu()
                 dices.append(dice)
 
-    if model_name == 'clipseg':
-        epoch_loss = total_loss / (len(dataloader) * num_classes)
+    epoch_loss = total_loss / len(dataloader)
 
+    if model_name == 'clipseg':
         dices = torch.cat(dices, 0)
         avg_dice = torch.mean(dices).item()
     else:
-        epoch_loss = total_loss / len(dataloader)
-        
         dices = torch.cat(dices, 0)
         dices_per_class = torch.mean(dices, 0)
         dice_str = [
@@ -160,7 +162,6 @@ def validate(
             for c, d in zip(classes, dices_per_class)
         ]
         dice_str = "\n".join(dice_str)
-        
         avg_dice = torch.mean(dices_per_class).item()
     
     return epoch_loss, avg_dice
