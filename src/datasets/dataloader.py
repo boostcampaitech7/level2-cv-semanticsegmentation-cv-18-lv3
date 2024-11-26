@@ -5,11 +5,13 @@ import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 from typing import Any
 import albumentations as A
-#from src.datasets.dataset import XRayDataset
-from src.models.clipseg.datasets.dataset import XRayDataset  
 from src.utils.augmentation import get_transform, load_config # get_augmentation 함수 가져오기
 
 def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
+    if config['model']['name'] == 'clipseg' :
+        from src.models.clipseg.datasets.dataset import XRayDataset
+    else :
+        from src.datasets.dataset import XRayDataset
 
     train_transforms = get_transform(config['data'], is_train=True)
     val_transforms = get_transform(config['data'], is_train=False)
@@ -37,6 +39,7 @@ def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
         num_workers=config['data']['train']['num_workers'],
         drop_last=True
     )
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=config['data']['val']['batch_size'],
@@ -49,7 +52,12 @@ def get_data_loaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader]:
 
 
 def get_inference_loaders(config: dict[str, Any]) -> DataLoader:
-    
+
+    if config['model']['name'] == 'clipseg' :
+        from src.models.clipseg.datasets.dataset import XRayDataset
+    else :
+        from src.datasets.dataset import XRayDataset
+
     inference_transforms = get_transform(config['data'], is_train=False)
     
     inference_dataset = XRayDataset(
