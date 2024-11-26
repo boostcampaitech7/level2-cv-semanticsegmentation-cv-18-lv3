@@ -19,8 +19,10 @@ def prepare_conditional(data_x) :
     Prepare conditional vector based on model type (CLIP or visual prompt).
     """
     cond = data_x
+
     if isinstance(cond, torch.Tensor):
         cond = cond.cuda()
+
     return cond
 
 
