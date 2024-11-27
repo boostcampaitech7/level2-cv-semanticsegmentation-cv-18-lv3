@@ -56,7 +56,7 @@ if __name__ == "__main__":
         parser.add_argument('-d', '--dev', help="dev mode on off", action='store_true', )
         parser.add_argument('-r', '--resume', help="resume train", action='store_true')
         parser.add_argument('-p', '--pth_path', help="path to pth file")
-        parser.add_argument('-wh', '--wehhook', help='slack webhook alarm', default=False)
+        parser.add_argument('-wh', '--webhook', help='slack webhook alarm', default=False)
         args = parser.parse_args()
         
         config_folder = args.config_folder
