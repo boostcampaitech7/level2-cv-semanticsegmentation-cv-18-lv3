@@ -17,6 +17,14 @@ def get_prompt_list(prompt):
         return ['a photo of a {}.', 'a photograph of a {}.', 'an image of a {}.', '{}.',
                             'a cropped photo of a {}.', 'a good photo of a {}.', 'a photo of one {}.',
                             'a bad photo of a {}.', 'a photo of the {}.']
+    elif prompt == 'medical':
+        return [
+            'an X-ray image of a {}.', 'a radiograph showing a {}.', 'a medical X-ray of a {}.', 
+                            'an orthopedic X-ray depicting a {}.',  'a chest X-ray illustrating a {}.',
+                            'a high-resolution X-ray of a {}.', 'a detailed radiograph of a {}.',
+                            'a clear medical X-ray showing a {}.', 'a diagnostic X-ray image of a {}.'
+        ]
+    
     else:
         raise ValueError('Invalid value for prompt')        
 
@@ -74,25 +82,25 @@ def forward_multihead_attention(x, b, with_aff=False, attn_mask=None):
     else:
         return x
 
-
 class CLIPDenseBase(nn.Module):
 
-    def __init__(self, version, reduce_cond, reduce_dim, prompt, n_tokens):
+    def __init__(self, version, reduce_cond, reduce_dim, prompt, n_tokens, classes):
         super().__init__()
+
+        self.classes = classes  # 클래스 리스트 저장
 
         import clip
 
-        # prec = torch.FloatTensor
+        # 기존 코드 유지
         self.clip_model, _ = clip.load(version, device='cpu', jit=False)
         self.model = self.clip_model.visual
 
-        # if not None, scale conv weights such that we obtain n_tokens.
         self.n_tokens = n_tokens
 
         for p in self.clip_model.parameters():
             p.requires_grad_(False)
 
-        # conditional
+        # Conditional 설정
         if reduce_cond is not None:
             self.reduce_cond = nn.Linear(512, reduce_cond)
             for p in self.reduce_cond.parameters():
@@ -107,13 +115,14 @@ class CLIPDenseBase(nn.Module):
 
         self.prompt_list = get_prompt_list(prompt)     
 
-        # precomputed prompts
+        # Precomputed prompts
         import pickle
         if isfile('precomputed_prompt_vectors.pickle'):
             precomp = pickle.load(open('precomputed_prompt_vectors.pickle', 'rb'))
             self.precomputed_prompts = {k: torch.from_numpy(v) for k, v in precomp.items()}        
         else:
             self.precomputed_prompts = dict()
+
     
     def rescaled_pos_emb(self, new_size):
         assert len(new_size) == 2
@@ -265,17 +274,17 @@ def clip_load_untrained(version):
     return CLIP(embed_dim, image_resolution, vision_layers, vision_width, vision_patch_size, 
         context_length, vocab_size, transformer_width, transformer_heads, transformer_layers)    
 
-
 class CLIPDensePredT(CLIPDenseBase):
 
     def __init__(self, version='ViT-B/32', extract_layers=(3, 6, 9), cond_layer=0, reduce_dim=128, n_heads=4, prompt='fixed', 
                  extra_blocks=0, reduce_cond=None, fix_shift=False,
                  learn_trans_conv_only=False,  limit_to_clip_only=False, upsample=False, 
-                 add_calibration=False, rev_activations=False, trans_conv=None, n_tokens=None, complex_trans_conv=False):
+                 add_calibration=False, rev_activations=False, trans_conv=None, n_tokens=None, complex_trans_conv=False,
+                 classes=None):  # classes 파라미터 추가
         
-        super().__init__(version, reduce_cond, reduce_dim, prompt, n_tokens)
-        # device = 'cpu'
+        super().__init__(version, reduce_cond, reduce_dim, prompt, n_tokens, classes)  # classes 전달
 
+        # 기존 코드 유지
         self.extract_layers = extract_layers
         self.cond_layer = cond_layer
         self.limit_to_clip_only = limit_to_clip_only
@@ -287,7 +296,7 @@ class CLIPDensePredT(CLIPDenseBase):
         if add_calibration:
             self.calibration_conds = 1
 
-        self.upsample_proj = nn.Conv2d(reduce_dim, 1, kernel_size=1) if upsample else None
+        self.upsample_proj = nn.Conv2d(reduce_dim, len(self.classes), kernel_size=1) if upsample else None  # len(self.classes) 사용
 
         self.add_activation1 = True
 
@@ -296,20 +305,17 @@ class CLIPDensePredT(CLIPDenseBase):
         self.token_shape = {'ViT-B/32': (7, 7), 'ViT-B/16': (14, 14)}[version]
 
         if fix_shift:
-            # self.shift_vector = nn.Parameter(torch.load(join(dirname(basename(__file__)), 'clip_text_shift_vector.pth')), requires_grad=False)
             self.shift_vector = nn.Parameter(torch.load(join(dirname(basename(__file__)), 'shift_text_to_vis.pth')), requires_grad=False)
-            # self.shift_vector = nn.Parameter(-1*torch.load(join(dirname(basename(__file__)), 'shift2.pth')), requires_grad=False)
         else:
             self.shift_vector = None
 
         if trans_conv is None:
             trans_conv_ks = {'ViT-B/32': (32, 32), 'ViT-B/16': (16, 16)}[version]
         else:
-            # explicitly define transposed conv kernel size
             trans_conv_ks = (trans_conv, trans_conv)
 
         if not complex_trans_conv:
-            self.trans_conv = nn.ConvTranspose2d(reduce_dim, 1, trans_conv_ks, stride=trans_conv_ks)
+            self.trans_conv = nn.ConvTranspose2d(reduce_dim, len(self.classes), trans_conv_ks, stride=trans_conv_ks)  # len(self.classes) 사용
         else:
             assert trans_conv_ks[0] == trans_conv_ks[1]
 
@@ -320,18 +326,16 @@ class CLIPDensePredT(CLIPDenseBase):
                 nn.ReLU(),
                 nn.ConvTranspose2d(reduce_dim, reduce_dim // 2, kernel_size=tp_kernels[0], stride=tp_kernels[0]),
                 nn.ReLU(),
-                nn.ConvTranspose2d(reduce_dim // 2, 1, kernel_size=tp_kernels[1], stride=tp_kernels[1]),               
+                nn.ConvTranspose2d(reduce_dim // 2, len(self.classes), kernel_size=tp_kernels[1], stride=tp_kernels[1]),               
             )
 
-#        self.trans_conv = nn.ConvTranspose2d(reduce_dim, 1, trans_conv_ks, stride=trans_conv_ks)
-        
         assert len(self.extract_layers) == depth
 
         self.reduces = nn.ModuleList([nn.Linear(768, reduce_dim) for _ in range(depth)])
         self.blocks = nn.ModuleList([nn.TransformerEncoderLayer(d_model=reduce_dim, nhead=n_heads) for _ in range(len(self.extract_layers))])
         self.extra_blocks = nn.ModuleList([nn.TransformerEncoderLayer(d_model=reduce_dim, nhead=n_heads) for _ in range(extra_blocks)])
         
-        # refinement and trans conv
+        # Refinement and trans conv
 
         if learn_trans_conv_only:
             for p in self.parameters():
@@ -341,6 +345,7 @@ class CLIPDensePredT(CLIPDenseBase):
                 p.requires_grad_(True)
 
         self.prompt_list = get_prompt_list(prompt)
+
 
 
     def forward(self, inp_image, conditional=None, return_features=False, mask=None):
@@ -501,16 +506,17 @@ class CLIPDenseBaseline(CLIPDenseBase):
 
 class CLIPSegMultiLabel(nn.Module):
 
-    def __init__(self, model) -> None:
+    def __init__(self, model, classes) -> None:
         super().__init__()
 
-        from third_party.JoEm.data_loader import get_seen_idx, get_unseen_idx, VOC
+        self.classes = classes  # 29 classes
 
-        self.pascal_classes = VOC
+        # Ensure that 'classes' are correctly mapped
+        self.class2ind = {v: i for i, v in enumerate(self.classes)}
+        self.ind2class = {v: k for k, v in self.class2ind.items()}
 
         from models.clipseg import CLIPDensePredT
         from general_utils import load_model
-        # self.clipseg = load_model('rd64-vit16-neg0.2-phrasecut', strict=False)
         self.clipseg = load_model(model, strict=False)
         
         self.clipseg.eval()
@@ -518,9 +524,9 @@ class CLIPSegMultiLabel(nn.Module):
     def forward(self, x):
 
         bs = x.shape[0]
-        out = torch.ones(21, bs, 352, 352).to(x.device) * -10
+        out = torch.ones(len(self.classes), bs, 352, 352).to(x.device) * -10
 
-        for class_id, class_name in enumerate(self.pascal_classes):
+        for class_id, class_name in enumerate(self.classes):
         
             fac = 3 if class_name == 'background' else 1
 
@@ -530,7 +536,7 @@ class CLIPSegMultiLabel(nn.Module):
             out[class_id] += pred
 
 
-        out = out.permute(1, 0, 2, 3)
+        out = out.permute(1, 0, 2, 3)  # [bs, classes, H, W]
 
         return out
 
