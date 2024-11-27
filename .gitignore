@@ -181,3 +181,7 @@ outputs/saved_models/**
 outputs/**
 
 .vscode/
+
+submission.csv
+
+beit3.spm
