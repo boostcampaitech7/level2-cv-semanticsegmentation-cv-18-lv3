@@ -28,7 +28,7 @@ configuration:
 
   # general
   mix: False # <-----------------
-  prompt: shuffle+
+  prompt: medical
   norm_cond: True
   mix_text_min: 0.0
   
