@@ -40,7 +40,7 @@ def train_one_epoch(
                 phrases = inputs[i + 1]
 
                 optimizer.zero_grad()
-                cond = prepare_conditional(phrases)
+                cond = prepare_conditional(model, phrases)
                 outputs, visual_q, _, _ = model(inputs[0], cond, return_features = True)
 
                 logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
@@ -94,7 +94,7 @@ def validate(
                     bimasks = masks[:,i,:,:].unsqueeze(1)
                     phrases = inputs[i + 1]
 
-                    cond = prepare_conditional(phrases)
+                    cond = prepare_conditional(model, phrases)
                     outputs, visual_q, _, _ = model(inputs[0], cond, return_features = True)
 
                     logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs

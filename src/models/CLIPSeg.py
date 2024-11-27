@@ -14,16 +14,20 @@ def get_clipseg() :
 
     return model
 
-def prepare_conditional(data_x) :
+def prepare_conditional(model, data_x, use_prompts = True) :
     """
     Prepare conditional vector based on model type (CLIP or visual prompt).
     """
-    cond = data_x
-
-    if isinstance(cond, torch.Tensor):
-        cond = cond.cuda()
+    if use_prompts :
+        prompts = model.sample_prompts(data_x)
+        cond = model.compute_conditional(prompts)  
+    else :
+        cond = data_x
+        if isinstance(cond, torch.Tensor):
+            cond = cond.cuda()
 
     return cond
+
 
 
 

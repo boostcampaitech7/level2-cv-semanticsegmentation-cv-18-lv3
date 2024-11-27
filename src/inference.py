@@ -50,7 +50,7 @@ def run(config):
                 for i in range(N):
                     phrases = images[i+1]
 
-                    cond = prepare_conditional(phrases)
+                    cond = prepare_conditional(model, phrases)
                     outputs, visual_q, _, _ = model(images, cond, return_features=True)
 
                     outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
