@@ -44,14 +44,16 @@ def run(config):
 
             if model_name == 'clipseg' :
                 images[0] = images[0].to(device)
-                _, N, _, _ = images[0].size()
+                N = 29
                 outputs_list = []
-
+                for i in range(N):
+                    print(images[i+1])
+                    
                 for i in range(N):
                     phrases = images[i+1]
 
-                    cond = prepare_conditional(model, phrases)
-                    outputs, visual_q, _, _ = model(images, cond, return_features=True)
+                    cond = prepare_conditional(phrases)
+                    outputs, visual_q, _, _ = model(images[0], cond, return_features=True)
 
                     outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
                     outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear", align_corners=False)

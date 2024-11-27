@@ -315,7 +315,7 @@ class CLIPDensePredT(CLIPDenseBase):
             trans_conv_ks = (trans_conv, trans_conv)
 
         if not complex_trans_conv:
-            self.trans_conv = nn.ConvTranspose2d(reduce_dim, len(self.classes), trans_conv_ks, stride=trans_conv_ks)  # len(self.classes) 사용
+            self.trans_conv = nn.ConvTranspose2d(reduce_dim, 1, trans_conv_ks, stride=trans_conv_ks)  # len(self.classes) 사용
         else:
             assert trans_conv_ks[0] == trans_conv_ks[1]
 
@@ -326,7 +326,7 @@ class CLIPDensePredT(CLIPDenseBase):
                 nn.ReLU(),
                 nn.ConvTranspose2d(reduce_dim, reduce_dim // 2, kernel_size=tp_kernels[0], stride=tp_kernels[0]),
                 nn.ReLU(),
-                nn.ConvTranspose2d(reduce_dim // 2, len(self.classes), kernel_size=tp_kernels[1], stride=tp_kernels[1]),               
+                nn.ConvTranspose2d(reduce_dim // 2, 1, kernel_size=tp_kernels[1], stride=tp_kernels[1]),               
             )
 
         assert len(self.extract_layers) == depth
