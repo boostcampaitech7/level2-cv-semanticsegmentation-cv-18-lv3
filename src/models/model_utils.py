@@ -5,13 +5,15 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.optim as optim
 from torchvision import models
 from typing import Any, Dict, Optional
-import segmentation_models_pytorch as smp
 
 from .unet import UNetResNet34 
 from .SAM2UNet import get_sam2unet
 from .smp_utils import get_smp_model
+import src.models.beit3.utils as bu
 
 from ..utils.loss import *
+
+import src.models.beit3.modeling_finetune
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
@@ -88,6 +90,18 @@ def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
     
     elif 'sam2unet_' in model_name:
         model = get_sam2unet(model_name)  
+    elif 'beit3' in model_name:
+        from timm import create_model
+        model = create_model(
+                    "beit3_base_patch16_224_imageclassification",
+                    pretrained=False,
+                    drop_path_rate=0.15,
+                    vocab_size=64010,
+                    checkpoint_activations=None)
+        bu.load_model_and_may_interpolate("/data/ephemeral/home/kwak/level2-cv-semanticsegmentation-cv-18-lv3/src/models/beit3/checkpoints/beit3_base_patch16_224.pth",
+                                          model,
+                                          "model|module",
+                                          "")
     else:
         raise ValueError(f"Unknown model: {model_name}")
 

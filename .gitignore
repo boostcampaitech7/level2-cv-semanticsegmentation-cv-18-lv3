@@ -181,3 +181,7 @@ outputs/saved_models/**
 outputs/**
 
 .vscode/
+
+src/models/beit3/checkpoints/*
+
+submission.csv

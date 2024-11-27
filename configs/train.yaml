@@ -35,7 +35,7 @@ train:
     monitor: 'metric'
 
 model:
-  name: "smp_unet++_resnet34"
+  name: "beit3"
 
   # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 
 

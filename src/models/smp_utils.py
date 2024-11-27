@@ -1,8 +1,8 @@
-import segmentation_models_pytorch as smp
+# import segmentation_models_pytorch as smp
 
 smp_models = {
-    "unet": smp.Unet,
-    "unet++": smp.UnetPlusPlus,
+    # "unet": smp.Unet,
+    # "unet++": smp.UnetPlusPlus,
 }
 
 def get_smp_model(model_config, num_classes):

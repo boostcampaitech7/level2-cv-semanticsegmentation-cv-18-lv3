@@ -42,10 +42,10 @@ def get_config(config_folder):
     return config
 
 if __name__ == "__main__":
-    is_debug = False
+    is_debug = True
     
     if is_debug:
-        config_folder = "outputs/dev_smp_unet_kh"
+        config_folder = "configs"
         mode = 'train'
         dev = True
         resume = False
