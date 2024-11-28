@@ -1,5 +1,6 @@
 
 ### 프로젝트 구조
+```plaintext
 📦level2-cv-semanticsegmentation
  ┣ 📜main.py
  ┣ 📂configs
@@ -44,3 +45,4 @@
  ┃   ┣ 📜rle_convert.py
  ┃   ┗ 📜trainer.py
  ┗ 📂wandb
+```
