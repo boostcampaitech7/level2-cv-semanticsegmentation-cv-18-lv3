@@ -30,6 +30,38 @@ CLASSES = [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna',
 ]
 
+BONE_LOCATE_CONTEXT = {
+    'finger-1': "This bone is the distal phalanx of the thumb, which is located at the tip of the thumb.",
+    'finger-2': "This bone is the distal phalanx of the index finger, which is located at the tip of the index finger.",
+    'finger-3': "This bone is the distal phalanx of the middle finger, which is located at the tip of the middle finger.",
+    'finger-4': "This bone is the distal phalanx of the ring finger, which is located at the tip of the ring finger.",
+    'finger-5': "This bone is the distal phalanx of the pinky finger, which is located at the tip of the pinky finger.",
+    'finger-6': "This bone is the middle phalanx of the index finger, which is located between the proximal and distal phalanges of the index finger.",
+    'finger-7': "This bone is the middle phalanx of the middle finger, which is located between the proximal and distal phalanges of the middle finger.",
+    'finger-8': "This bone is the middle phalanx of the ring finger, which is located between the proximal and distal phalanges of the ring finger.",
+    'finger-9': "This bone is the middle phalanx of the pinky finger, which is located between the proximal and distal phalanges of the pinky finger.",
+    'finger-10': "This bone is the proximal phalanx of the thumb, which is located at the base of the thumb.",
+    'finger-11': "This bone is the proximal phalanx of the index finger, which is located at the base of the index finger.",
+    'finger-12': "This bone is the proximal phalanx of the middle finger, which is located at the base of the middle finger.",
+    'finger-13': "This bone is the proximal phalanx of the ring finger, which is located at the base of the ring finger.",
+    'finger-14': "This bone is the proximal phalanx of the pinky finger, which is located at the base of the pinky finger.",
+    'finger-15': "This bone is the metacarpal of the thumb, which is located in the palm beneath the thumb.",
+    'finger-16': "This bone is the metacarpal of the index finger, which is located in the palm beneath the index finger.",
+    'finger-17': "This bone is the metacarpal of the middle finger, which is located in the palm beneath the middle finger.",
+    'finger-18': "This bone is the metacarpal of the ring finger, which is located in the palm beneath the ring finger.",
+    'finger-19': "This bone is the metacarpal of the pinky finger, which is located in the palm beneath the pinky finger.",
+    'Trapezium': "This bone is the trapezium, which is located at the base of the thumb in the wrist.",
+    'Trapezoid': "This bone is the trapezoid, which is located in the wrist beneath the index finger.",
+    'Capitate': "This bone is the capitate, which is located at the center of the wrist.",
+    'Hamate': "This bone is the hamate, which is located in the wrist near the bases of the ring and pinky fingers.",
+    'Scaphoid': "This bone is the scaphoid, which is located in the wrist near the base of the thumb.",
+    'Lunate': "This bone is the lunate, which is located at the center of the wrist near the scaphoid and triquetrum.",
+    'Triquetrum': "This bone is the triquetrum, which is located on the ulnar side of the wrist near the pisiform.",
+    'Pisiform': "This bone is the pisiform, which is located on the ulnar side of the wrist above the triquetrum.",
+    'Radius': "This bone is the radius, which is located on the thumb side of the forearm.",
+    'Ulna': "This bone is the ulna, which is located on the pinky side of the forearm."
+}
+
 CLASS2IND = {v: i for i, v in enumerate(CLASSES)}
 IND2CLASS = {v: k for k, v in CLASS2IND.items()}
 
@@ -98,7 +130,7 @@ class XRayDataset(Dataset):
 
         image = cv2.imread(image_path)
         image = image / 255.0
-
+        
         if self.mode in ['train', 'val']:
             label_name = self.labelnames[item]
             label_path = os.path.join(self.label_root, label_name)
@@ -109,7 +141,7 @@ class XRayDataset(Dataset):
             with open(label_path, "r") as f:
                 annotations = json.load(f)["annotations"]
 
-            phrases = [None] * len(self.classes) 
+            phrases = [None] * len(self.classes)
 
             for idx, ann in enumerate(annotations):
                 c = ann["label"]
@@ -120,7 +152,7 @@ class XRayDataset(Dataset):
                 cv2.fillPoly(class_label, [points], 1)
                 label[..., class_ind] = class_label  # 클래스 인덱스를 사용하여 마스크 할당
 
-                phrases[class_ind] = c
+                phrases[class_ind] = BONE_LOCATE_CONTEXT[c]
 
             if self.transforms is not None:
                 inputs = {"image": image, "mask": label}
@@ -144,7 +176,7 @@ class XRayDataset(Dataset):
         elif self.mode == 'inference':
             # inference 시에도 text prompt 필요 
             # class 이름을 프롬포트로 사용
-            phrases = self.classes
+            phrases = CLASSES
 
             if self.transforms is not None:
                 inputs = {"image": image}
