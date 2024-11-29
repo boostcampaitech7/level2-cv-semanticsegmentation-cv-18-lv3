@@ -14,7 +14,7 @@ def get_clipseg() :
 
     return model
 
-def prepare_conditional(model, data_x, use_prompts = True) :
+def prepare_conditional(model, data_x, use_prompts = False) :
     """
     Prepare conditional vector based on model type (CLIP or visual prompt).
     """
