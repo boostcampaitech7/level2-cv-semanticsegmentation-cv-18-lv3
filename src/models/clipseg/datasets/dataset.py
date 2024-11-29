@@ -30,6 +30,37 @@ CLASSES = [
     'Triquetrum', 'Pisiform', 'Radius', 'Ulna',
 ]
 
+BONE_ANATOMICAL_DETAILS = {
+    'finger-1': "The distal phalanx of the thumb is the most distal bone, responsible for supporting the nail bed and enabling fine motor precision in the thumb.",
+    'finger-2': "The distal phalanx of the index finger is the terminal bone that facilitates precise pointing and grasping functions.",
+    'finger-3': "The distal phalanx of the middle finger is the end bone, supporting the fingertip for precise manipulative tasks.",
+    'finger-4': "The distal phalanx of the ring finger is the terminal bone contributing to grip strength and finger extension.",
+    'finger-5': "The distal phalanx of the pinky finger provides structural support to the fingertip and assists in grip and manipulation tasks.",
+    'finger-6': "The middle phalanx of the index finger connects the distal and proximal phalanges, enabling flexion and extension of the finger.",
+    'finger-7': "The middle phalanx of the middle finger provides leverage for flexion and extension and is critical for strong grip functions.",
+    'finger-8': "The middle phalanx of the ring finger facilitates bending and straightening motions in the finger.",
+    'finger-9': "The middle phalanx of the pinky finger supports fine motor adjustments during gripping.",
+    'finger-10': "The proximal phalanx of the thumb forms the base of the thumb and is essential for opposability and dexterity.",
+    'finger-11': "The proximal phalanx of the index finger serves as a pivot point for finger movement and contributes to precision grip.",
+    'finger-12': "The proximal phalanx of the middle finger forms the primary bone structure for forceful grip and extension.",
+    'finger-13': "The proximal phalanx of the ring finger is a key structure in the finger that aids in flexion and extension.",
+    'finger-14': "The proximal phalanx of the pinky finger allows for articulation and movement in the small finger, assisting in overall hand flexibility.",
+    'finger-15': "The metacarpal of the thumb supports the base of the thumb and contributes to thumb mobility and stability during gripping.",
+    'finger-16': "The metacarpal of the index finger provides structural support for the index finger and is integral to strong pinch grips.",
+    'finger-17': "The metacarpal of the middle finger is the central support for the hand and facilitates force transmission during grasping.",
+    'finger-18': "The metacarpal of the ring finger provides structural support to the ring finger, aiding in grip strength and balance.",
+    'finger-19': "The metacarpal of the pinky finger stabilizes the small finger and enhances flexibility for intricate hand movements.",
+    'Trapezium': "The trapezium is a carpal bone that articulates with the first metacarpal, enabling thumb movement and opposition.",
+    'Trapezoid': "The trapezoid is a small, wedge-shaped carpal bone that supports the base of the index finger.",
+    'Capitate': "The capitate is the largest carpal bone and acts as the central anchor for the carpal bones in the wrist.",
+    'Hamate': "The hamate is a wedge-shaped carpal bone that features a hook-like process for ligament attachment.",
+    'Scaphoid': "The scaphoid is a carpal bone that bridges the proximal and distal rows of carpal bones, playing a key role in wrist stability.",
+    'Lunate': "The lunate is a crescent-shaped carpal bone that enables wrist flexion and extension.",
+    'Triquetrum': "The triquetrum is a three-sided carpal bone that forms the ulnar side of the wrist joint.",
+    'Pisiform': "The pisiform is a small, pea-shaped carpal bone embedded in a tendon, serving as a leverage point for wrist movement.",
+    'Radius': "The radius is one of the two long bones in the forearm, playing a crucial role in forearm rotation and wrist joint articulation.",
+    'Ulna': "The ulna is a long bone in the forearm that forms the primary articulation with the humerus at the elbow joint."
+
 BONE_LOCATE_CONTEXT = {
     'finger-1': "This bone is the distal phalanx of the thumb, which is located at the tip of the thumb.",
     'finger-2': "This bone is the distal phalanx of the index finger, which is located at the tip of the index finger.",
@@ -152,7 +183,8 @@ class XRayDataset(Dataset):
                 cv2.fillPoly(class_label, [points], 1)
                 label[..., class_ind] = class_label  # 클래스 인덱스를 사용하여 마스크 할당
 
-                phrases[class_ind] = BONE_LOCATE_CONTEXT[c]
+                phrases[class_ind] = BONE_ANATOMICAL_DETAILS[c]
+                # phrases[class_ind] = BONE_LOCATE_CONTEXT[c]
 
             if self.transforms is not None:
                 inputs = {"image": image, "mask": label}
