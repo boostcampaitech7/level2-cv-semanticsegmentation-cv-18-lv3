@@ -13,7 +13,7 @@ from typing import Any, Dict
 
 from etc.dev.dev_utils import dev_paths_setting, dev_wandb_setting
 
-def set_random_seed(seed):
+def set_random_seed(seed: int):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed) 
@@ -23,7 +23,7 @@ def set_random_seed(seed):
     random.seed(seed)
 
 
-def get_config(config_folder):
+def get_config(config_folder: str):
     config = {}
 
     config_folder = os.path.join(config_folder,'*.yaml')
