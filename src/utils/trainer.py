@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from typing import Any, Dict, Tuple
 
 # save model function 
-def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth"):
+def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth") -> None:
     os.makedirs(save_dir, exist_ok=True)
     output_path = os.path.join(save_dir, file_name)
     torch.save(state, output_path)
@@ -20,7 +20,7 @@ def train_one_epoch(
                 criterion: nn.Module,
                 optimizer: optim.Optimizer,
                 device: torch.device,
-            ) -> Tuple[float, float]:
+            ) -> float:
     
     model.train()
     total_loss = 0
