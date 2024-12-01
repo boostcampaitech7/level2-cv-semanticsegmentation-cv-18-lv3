@@ -15,8 +15,9 @@ import argparse
 
 import yaml
 
+from typing import Any
 
-def get_config(config_folder):
+def get_config(config_folder: str) -> dict[str, Any]:
     config = {}
 
     config_folder = os.path.join(config_folder,'*.yaml')
