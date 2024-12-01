@@ -5,7 +5,7 @@ from .sam2.build_sam import build_sam2
 import os
 import subprocess
 
-def download_file(url, save_path):
+def download_file(url: str, save_path: str) -> None:
     if not os.path.exists(save_path):
         print(f"File not found at {save_path}. Downloading from {url}...")
         try:
@@ -14,7 +14,7 @@ def download_file(url, save_path):
             raise RuntimeError(f"Failed to download the file from {url}. Error: {e}")
 
 
-def get_sam2unet(model_name, hiera_dir='./pretrained_models'):
+def get_sam2unet(model_name: str, hiera_dir='./pretrained_models') -> nn.Module:
     model_sizes = {
         "tiny": ("sam2_hiera_tiny.pt", "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_tiny.pt"),
         "base": ("sam2_hiera_base+.pt", "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_base_plus.pt"),
