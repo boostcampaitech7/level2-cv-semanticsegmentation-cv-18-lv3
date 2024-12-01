@@ -20,6 +20,8 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import models
 
 from src.utils.augmentation import get_transform
+from .meta_data import MetaDataManager
+
 
 CLASSES = [
     "finger-1", "finger-2", "finger-3", "finger-4", "finger-5",
@@ -104,22 +106,35 @@ class XRayDataset(Dataset):
         image_root: str,
         label_root: str,
         classes: list,
-        mode: str="train",
+        mode: str = "train",
         transforms=None
     ) -> None:
-        if mode == "train" or mode == "val":
-            self.classes = classes
-            self.image_root = image_root
-            self.label_root = label_root
 
+        self.classes = classes
+        self.image_root = image_root
+        self.label_root = label_root
+        self.mode = mode
+        self.transforms = transforms
+
+        # meta_data 플래그 직접 설정 (True 또는 False)
+        self.meta_data = False  # 필요에 따라 True로 변경
+
+        if self.meta_data:
+            # MetaDataManager 초기화
+            metadata_csv_path = './data/meta_data.csv'
+            self.meta_manager = MetaDataManager(metadata_csv_path)
+        else:
+            self.meta_manager = None  # meta_data=False인 경우 None으로 설정
+
+        if self.mode in ["train", "val"]:
             pngs = self.get_pngs()
             jsons = self.get_jsons()
 
             jsons_fn_prefix = {os.path.splitext(fname)[0] for fname in jsons}
             pngs_fn_prefix = {os.path.splitext(fname)[0] for fname in pngs}
 
-            assert len(jsons_fn_prefix - pngs_fn_prefix) == 0
-            assert len(pngs_fn_prefix - jsons_fn_prefix) == 0
+            assert len(jsons_fn_prefix - pngs_fn_prefix) == 0, "JSON 파일과 PNG 파일의 접두사가 일치하지 않습니다."
+            assert len(pngs_fn_prefix - jsons_fn_prefix) == 0, "PNG 파일과 JSON 파일의 접두사가 일치하지 않습니다."
 
             pngs = sorted(pngs)
             jsons = sorted(jsons)
@@ -128,46 +143,45 @@ class XRayDataset(Dataset):
             _labelnames = np.array(jsons)
 
             groups = [os.path.dirname(fname) for fname in _filenames]
-
-            ys = [0 for fname in _filenames]
+            ys = [0 for _ in _filenames]
 
             gkf = GroupKFold(n_splits=5)
 
             filenames = []
             labelnames = []
-            for i, (x, y) in enumerate(gkf.split(_filenames, ys, groups)):
-                if mode == "train":
+            for i, (train_idx, val_idx) in enumerate(gkf.split(_filenames, ys, groups)):
+                if self.mode == "train":
                     if i == 0:
                         continue
-
-                    filenames += list(_filenames[y])
-                    labelnames += list(_labelnames[y])
-
+                    filenames += list(_filenames[val_idx])
+                    labelnames += list(_labelnames[val_idx])
                 else:
-                    filenames = list(_filenames[y])
-                    labelnames = list(_labelnames[y])
+                    filenames = list(_filenames[val_idx])
+                    labelnames = list(_labelnames[val_idx])
                     break
 
+            self.filenames = filenames
             self.labelnames = labelnames
 
-        elif mode == "inference":
-            self.image_root = image_root
+        elif self.mode == "inference":
             pngs = self.get_pngs()
-            filenames = np.array(sorted(pngs))
-
-        self.filenames = filenames
-        self.transforms = transforms
-        self.mode = mode
+            self.filenames = sorted(pngs)
+        else:
+            raise ValueError(f"Unsupported mode: {self.mode}")
 
     def __len__(self) -> int:
+
         return len(self.filenames)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int):
+
         image_name = self.filenames[item]
         image_path = os.path.join(self.image_root, image_name)
 
         image = cv2.imread(image_path)
-        image = image / 255.0
+        if image is None:
+            raise FileNotFoundError(f"이미지를 읽을 수 없습니다: {image_path}")
+        image = image.astype(np.float32) / 255.0
 
         if self.mode in ["train", "val"]:
             label_name = self.labelnames[item]
@@ -181,8 +195,16 @@ class XRayDataset(Dataset):
 
             phrases = [None] * len(self.classes)
 
-            for idx, ann in enumerate(annotations):
+            if self.meta_data and self.meta_manager is not None:
+                age, gender, weight, height, bone_descriptor = self.meta_manager.get_metadata(image_name)
+                meta_str = f"Patient info: Age {age}, Gender {gender}, Weight {weight} kg, Height {height} cm, Bone descriptor: {bone_descriptor}. "
+            else:
+                meta_str = ""
+
+            for ann in annotations:
                 c = ann["label"]
+                if c not in CLASS2IND:
+                    continue 
                 class_ind = CLASS2IND[c]
                 points = np.array(ann["points"])
 
@@ -190,8 +212,21 @@ class XRayDataset(Dataset):
                 cv2.fillPoly(class_label, [points], 1)
                 label[..., class_ind] = class_label  # 클래스 인덱스를 사용하여 마스크 할당
 
-                phrases[class_ind] = BONE_ANATOMICAL_DETAILS[c]
-                # phrases[class_ind] = BONE_LOCATE_CONTEXT[c]
+                # meta_data=True인 경우 meta_str를 포함한 phrase 생성
+                if self.meta_data and meta_str:
+                    phrase = f"{c}. {meta_str}"
+                else:
+                    phrase = f"{c}."
+                phrases[class_ind] = phrase
+
+            # phrases에 None이 남아있는 경우 처리
+            for idx, p in enumerate(phrases):
+                if p is None:
+                    c = self.classes[idx]
+                    if self.meta_data and meta_str:
+                        phrases[idx] = f"{c}. {meta_str}"
+                    else:
+                        phrases[idx] = f"{c}."
 
             if self.transforms is not None:
                 inputs = {"image": image, "mask": label}
@@ -208,14 +243,25 @@ class XRayDataset(Dataset):
 
             target_additional = (torch.zeros(0), item)
 
-            data_x = (image,) + (tuple(phrases))
+            data_x = (image,) + tuple(phrases)
 
             return data_x, (label, *target_additional)
 
         elif self.mode == "inference":
-            # inference 시에도 text prompt 필요
-            # class 이름을 프롬포트로 사용
-            phrases = CLASSES
+            # inference 시에도 프롬프트 생성
+            phrases = []
+            if self.meta_data and self.meta_manager is not None:
+                age, gender, weight, height, bone_descriptor = self.meta_manager.get_metadata(image_name)
+                meta_str = f"Patient info: Age {age}, Gender {gender}, Weight {weight} kg, Height {height} cm, Bone descriptor: {bone_descriptor}. "
+            else:
+                meta_str = ""
+
+            for c in self.classes:
+                if self.meta_data and meta_str:
+                    phrase = f"{c}. {meta_str}"
+                else:
+                    phrase = f"{c}."
+                phrases.append(phrase)
 
             if self.transforms is not None:
                 inputs = {"image": image}
@@ -233,6 +279,7 @@ class XRayDataset(Dataset):
             raise ValueError(f"Unsupported mode: {self.mode}")
 
     def get_pngs(self) -> set:
+
         return {
             os.path.relpath(os.path.join(root, fname), start=self.image_root)
             for root, _dirs, files in os.walk(self.image_root)
@@ -241,6 +288,7 @@ class XRayDataset(Dataset):
         }
 
     def get_jsons(self) -> set:
+
         return {
             os.path.relpath(os.path.join(root, fname), start=self.label_root)
             for root, _dirs, files in os.walk(self.label_root)
