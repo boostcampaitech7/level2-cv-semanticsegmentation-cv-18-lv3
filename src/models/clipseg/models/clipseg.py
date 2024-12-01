@@ -7,21 +7,21 @@ from torch.nn.modules.activation import ReLU
 
 
 def get_prompt_list(prompt):
-    if prompt == 'plain':
-        return ['{}']    
-    elif prompt == 'fixed':
-        return ['a photo of a {}.']
-    elif prompt == 'shuffle':
-        return ['a photo of a {}.', 'a photograph of a {}.', 'an image of a {}.', '{}.']
-    elif prompt == 'shuffle+':
-        return ['a photo of a {}.', 'a photograph of a {}.', 'an image of a {}.', '{}.',
-                            'a cropped photo of a {}.', 'a good photo of a {}.', 'a photo of one {}.',
-                            'a bad photo of a {}.', 'a photo of the {}.']
-    elif prompt == 'medical':
-        return ['an X-ray image of a {}.']
+    if prompt == "plain":
+        return ["{}"]    
+    elif prompt == "fixed":
+        return ["a photo of a {}."]
+    elif prompt == "shuffle":
+        return ["a photo of a {}.", "a photograph of a {}.", "an image of a {}.", "{}."]
+    elif prompt == "shuffle+":
+        return ["a photo of a {}.", "a photograph of a {}.", "an image of a {}.", "{}.",
+                            "a cropped photo of a {}.", "a good photo of a {}.", "a photo of one {}.",
+                            "a bad photo of a {}.", "a photo of the {}."]
+    elif prompt == "medical":
+        return ["an X-ray image of a {}."]
     
     else:
-        raise ValueError('Invalid value for prompt')        
+        raise ValueError("Invalid value for prompt")        
 
 
 def forward_multihead_attention(x, b, with_aff=False, attn_mask=None):
@@ -53,12 +53,12 @@ def forward_multihead_attention(x, b, with_aff=False, attn_mask=None):
         n_heads = attn_output_weights.size(0) // attn_mask.size(0)
         attn_mask = attn_mask.repeat(n_heads, 1)
         
-        if attn_mask_type == 'cls_token':
+        if attn_mask_type == "cls_token":
             # the mask only affects similarities compared to the readout-token.
             attn_output_weights[:, 0, 1:] = attn_output_weights[:, 0, 1:] * attn_mask[None,...]
             # attn_output_weights[:, 0, 0] = 0*attn_output_weights[:, 0, 0]
 
-        if attn_mask_type == 'all':
+        if attn_mask_type == "all":
             # print(attn_output_weights.shape, attn_mask[:, None].shape)
             attn_output_weights[:, 1:, 1:] = attn_output_weights[:, 1:, 1:] * attn_mask[:, None]
         
@@ -86,7 +86,7 @@ class CLIPDenseBase(nn.Module):
         import clip
 
         # prec = torch.FloatTensor
-        self.clip_model, _ = clip.load(version, device='cpu', jit=False)
+        self.clip_model, _ = clip.load(version, device="cpu", jit=False)
         self.model = self.clip_model.visual
 
         # if not None, scale conv weights such that we obtain n_tokens.
@@ -112,8 +112,8 @@ class CLIPDenseBase(nn.Module):
 
         # precomputed prompts
         import pickle
-        if isfile('precomputed_prompt_vectors.pickle'):
-            precomp = pickle.load(open('precomputed_prompt_vectors.pickle', 'rb'))
+        if isfile("precomputed_prompt_vectors.pickle"):
+            precomp = pickle.load(open("precomputed_prompt_vectors.pickle", "rb"))
             self.precomputed_prompts = {k: torch.from_numpy(v) for k, v in precomp.items()}        
         else:
             self.precomputed_prompts = dict()
@@ -122,7 +122,7 @@ class CLIPDenseBase(nn.Module):
         assert len(new_size) == 2
 
         a = self.model.positional_embedding[1:].T.view(1, 768, *self.token_shape)
-        b = nnf.interpolate(a, new_size, mode='bicubic', align_corners=False).squeeze(0).view(768, new_size[0]*new_size[1]).T
+        b = nnf.interpolate(a, new_size, mode="bicubic", align_corners=False).squeeze(0).view(768, new_size[0]*new_size[1]).T
         return torch.cat([self.model.positional_embedding[:1], b])
 
     def visual_forward(self, x_inp, extract_layers=(), skip=False, mask=None):
@@ -134,7 +134,7 @@ class CLIPDenseBase(nn.Module):
 
             if self.n_tokens is not None:
                 stride2 = x_inp.shape[2] // self.n_tokens
-                conv_weight2 = nnf.interpolate(self.model.conv1.weight, (stride2, stride2), mode='bilinear', align_corners=True)
+                conv_weight2 = nnf.interpolate(self.model.conv1.weight, (stride2, stride2), mode="bilinear", align_corners=True)
                 x = nnf.conv2d(x_inp, conv_weight2, bias=self.model.conv1.bias, stride=stride2, dilation=self.model.conv1.dilation)
             else:
                 x = self.model.conv1(x_inp)  # shape = [*, width, grid, grid]
@@ -161,7 +161,7 @@ class CLIPDenseBase(nn.Module):
                 
                 if mask is not None:
                     mask_layer, mask_type, mask_tensor = mask
-                    if mask_layer == i or mask_layer == 'all':
+                    if mask_layer == i or mask_layer == "all":
                         # import ipdb; ipdb.set_trace()
                         size = int(math.sqrt(x.shape[0] - 1))
                         
@@ -178,12 +178,12 @@ class CLIPDenseBase(nn.Module):
                     affinities += [aff_per_head]
 
                     #if self.n_tokens is not None:
-                    #    activations += [nnf.interpolate(x, inp_size, mode='bilinear', align_corners=True)]
+                    #    activations += [nnf.interpolate(x, inp_size, mode="bilinear", align_corners=True)]
                     #else:
                     activations += [x]
 
                 if len(extract_layers) > 0 and i == max(extract_layers) and skip:
-                    print('early skip')
+                    print("early skip")
                     break
                 
             x = x.permute(1, 0, 2)  # LND -> NLD
@@ -222,7 +222,7 @@ class CLIPDenseBase(nn.Module):
             with torch.no_grad():
                 cond, _, _ = self.visual_forward(conditional)
         else:
-            raise ValueError('invalid conditional')
+            raise ValueError("invalid conditional")
         return cond   
 
     def compute_conditional(self, conditional):
@@ -247,10 +247,10 @@ class CLIPDenseBase(nn.Module):
 
 
 def clip_load_untrained(version):
-    assert version == 'ViT-B/16'
+    assert version == "ViT-B/16"
     from clip.model import CLIP
     from clip.clip import _MODELS, _download
-    model = torch.jit.load(_download(_MODELS['ViT-B/16'])).eval()
+    model = torch.jit.load(_download(_MODELS["ViT-B/16"])).eval()
     state_dict = model.state_dict()
 
     vision_width = state_dict["visual.conv1.weight"].shape[0]
@@ -271,13 +271,13 @@ def clip_load_untrained(version):
 
 class CLIPDensePredT(CLIPDenseBase):
 
-    def __init__(self, version='ViT-B/32', extract_layers=(3, 6, 9), cond_layer=0, reduce_dim=128, n_heads=4, prompt='fixed', 
+    def __init__(self, version="ViT-B/32", extract_layers=(3, 6, 9), cond_layer=0, reduce_dim=128, n_heads=4, prompt="fixed", 
                  extra_blocks=0, reduce_cond=None, fix_shift=False,
                  learn_trans_conv_only=False,  limit_to_clip_only=False, upsample=False, 
                  add_calibration=False, rev_activations=False, trans_conv=None, n_tokens=None, complex_trans_conv=False):
         
         super().__init__(version, reduce_cond, reduce_dim, prompt, n_tokens)
-        # device = 'cpu'
+        # device = "cpu"
 
         self.extract_layers = extract_layers
         self.cond_layer = cond_layer
@@ -296,17 +296,17 @@ class CLIPDensePredT(CLIPDenseBase):
 
         self.version = version
         
-        self.token_shape = {'ViT-B/32': (7, 7), 'ViT-B/16': (14, 14)}[version]
+        self.token_shape = {"ViT-B/32": (7, 7), "ViT-B/16": (14, 14)}[version]
 
         if fix_shift:
-            # self.shift_vector = nn.Parameter(torch.load(join(dirname(basename(__file__)), 'clip_text_shift_vector.pth')), requires_grad=False)
-            self.shift_vector = nn.Parameter(torch.load(join(dirname(basename(__file__)), 'shift_text_to_vis.pth')), requires_grad=False)
-            # self.shift_vector = nn.Parameter(-1*torch.load(join(dirname(basename(__file__)), 'shift2.pth')), requires_grad=False)
+            # self.shift_vector = nn.Parameter(torch.load(join(dirname(basename(__file__)), "clip_text_shift_vector.pth")), requires_grad=False)
+            self.shift_vector = nn.Parameter(torch.load(join(dirname(basename(__file__)), "shift_text_to_vis.pth")), requires_grad=False)
+            # self.shift_vector = nn.Parameter(-1*torch.load(join(dirname(basename(__file__)), "shift2.pth")), requires_grad=False)
         else:
             self.shift_vector = None
 
         if trans_conv is None:
-            trans_conv_ks = {'ViT-B/32': (32, 32), 'ViT-B/16': (16, 16)}[version]
+            trans_conv_ks = {"ViT-B/32": (32, 32), "ViT-B/16": (16, 16)}[version]
         else:
             # explicitly define transposed conv kernel size
             trans_conv_ks = (trans_conv, trans_conv)
@@ -353,7 +353,7 @@ class CLIPDensePredT(CLIPDenseBase):
         inp_image = inp_image.to(self.model.positional_embedding.device)
 
         if mask is not None:
-            raise ValueError('mask not supported')
+            raise ValueError("mask not supported")
 
         # x_inp = normalize(inp_image)
         x_inp = inp_image
@@ -397,11 +397,11 @@ class CLIPDensePredT(CLIPDenseBase):
         a = self.trans_conv(a)
 
         if self.n_tokens is not None:
-            a = nnf.interpolate(a, x_inp.shape[2:], mode='bilinear', align_corners=True) 
+            a = nnf.interpolate(a, x_inp.shape[2:], mode="bilinear", align_corners=True) 
 
         if self.upsample_proj is not None:
             a = self.upsample_proj(a)
-            a = nnf.interpolate(a, x_inp.shape[2:], mode='bilinear')
+            a = nnf.interpolate(a, x_inp.shape[2:], mode="bilinear")
 
         if return_features:
             return a, visual_q, cond, [activation1] + activations
@@ -412,8 +412,8 @@ class CLIPDensePredT(CLIPDenseBase):
 
 class CLIPDensePredTMasked(CLIPDensePredT):
 
-    def __init__(self, version='ViT-B/32', extract_layers=(3, 6, 9), cond_layer=0, reduce_dim=128, n_heads=4, 
-                 prompt='fixed', extra_blocks=0, reduce_cond=None, fix_shift=False, learn_trans_conv_only=False, 
+    def __init__(self, version="ViT-B/32", extract_layers=(3, 6, 9), cond_layer=0, reduce_dim=128, n_heads=4, 
+                 prompt="fixed", extra_blocks=0, reduce_cond=None, fix_shift=False, learn_trans_conv_only=False, 
                  refine=None, limit_to_clip_only=False, upsample=False, add_calibration=False, n_tokens=None):
 
         super().__init__(version=version, extract_layers=extract_layers, cond_layer=cond_layer, reduce_dim=reduce_dim, 
@@ -423,7 +423,7 @@ class CLIPDensePredTMasked(CLIPDensePredT):
                          n_tokens=n_tokens)
 
     def visual_forward_masked(self, img_s, seg_s):
-        return super().visual_forward(img_s, mask=('all', 'cls_token', seg_s))
+        return super().visual_forward(img_s, mask=("all", "cls_token", seg_s))
 
     def forward(self, img_q, cond_or_img_s, seg_s=None, return_features=False):
 
@@ -441,19 +441,19 @@ class CLIPDensePredTMasked(CLIPDensePredT):
 
 class CLIPDenseBaseline(CLIPDenseBase):
 
-    def __init__(self, version='ViT-B/32', cond_layer=0, 
-                extract_layer=9, reduce_dim=128, reduce2_dim=None, prompt='fixed', 
+    def __init__(self, version="ViT-B/32", cond_layer=0, 
+                extract_layer=9, reduce_dim=128, reduce2_dim=None, prompt="fixed", 
                  reduce_cond=None, limit_to_clip_only=False, n_tokens=None):
         
         super().__init__(version, reduce_cond, reduce_dim, prompt, n_tokens)
-        device = 'cpu'
+        device = "cpu"
 
         # self.cond_layer = cond_layer
         self.extract_layer = extract_layer
         self.limit_to_clip_only = limit_to_clip_only
         self.shift_vector = None
 
-        self.token_shape = {'ViT-B/32': (7, 7), 'ViT-B/16': (14, 14)}[version]
+        self.token_shape = {"ViT-B/32": (7, 7), "ViT-B/16": (14, 14)}[version]
         
         assert reduce2_dim is not None
 
@@ -463,7 +463,7 @@ class CLIPDenseBaseline(CLIPDenseBase):
             nn.Linear(reduce2_dim, reduce_dim)
         )
         
-        trans_conv_ks = {'ViT-B/32': (32, 32), 'ViT-B/16': (16, 16)}[version]
+        trans_conv_ks = {"ViT-B/32": (32, 32), "ViT-B/16": (16, 16)}[version]
         self.trans_conv = nn.ConvTranspose2d(reduce_dim, 1, trans_conv_ks, stride=trans_conv_ks)
 
 
@@ -513,7 +513,7 @@ class CLIPSegMultiLabel(nn.Module):
 
         from models.clipseg import CLIPDensePredT
         from general_utils import load_model
-        # self.clipseg = load_model('rd64-vit16-neg0.2-phrasecut', strict=False)
+        # self.clipseg = load_model("rd64-vit16-neg0.2-phrasecut", strict=False)
         self.clipseg = load_model(model, strict=False)
         
         self.clipseg.eval()
@@ -525,7 +525,7 @@ class CLIPSegMultiLabel(nn.Module):
 
         for class_id, class_name in enumerate(self.pascal_classes):
         
-            fac = 3 if class_name == 'background' else 1
+            fac = 3 if class_name == "background" else 1
 
             with torch.no_grad():
                 pred = torch.sigmoid(self.clipseg(x, class_name)[0][:,0]) * fac

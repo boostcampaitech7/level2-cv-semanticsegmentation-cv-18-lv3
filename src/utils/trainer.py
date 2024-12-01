@@ -9,8 +9,8 @@ from typing import Any, Dict, Tuple
 
 from src.models.CLIPSeg import prepare_conditional
 
-# save model function 
-def save_model(state: Dict[str, Any], save_dir: str, file_name: str = "best_model.pth"):
+# save model function
+def save_model(state: Dict[str, Any], save_dir: str, file_name: str="best_model.pth") -> None:
     os.makedirs(save_dir, exist_ok=True)
     output_path = os.path.join(save_dir, file_name)
     torch.save(state, output_path)
@@ -31,32 +31,32 @@ def train_one_epoch(
     for batch in tqdm(dataloader, desc="Training"):
         inputs, masks = batch
 
-        if model_name == 'clipseg' : 
+        if model_name == "clipseg":
             inputs[0], masks = inputs[0].to(device), masks[0].to(device)
-            _, N, _, _ = masks.size() # N : Nume of Classes
+            _, N, _, _ = masks.size()  # N: Number of Classes
 
-            for i in range(N) :
-                bimasks = masks[:,i,:,:].unsqueeze(1)
+            for i in range(N):
+                bimasks = masks[:, i, :, :].unsqueeze(1)
                 phrases = inputs[i + 1]
 
                 optimizer.zero_grad()
                 cond = prepare_conditional(model, phrases)
-                outputs, visual_q, _, _ = model(inputs[0], cond, return_features = True)
+                outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
 
-                logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
                 loss = criterion(logits, bimasks)
                 loss.backward()
                 optimizer.step()
 
                 total_loss += loss.item()
 
-        else :
+        else:
             inputs, masks = inputs.to(device), masks.to(device)
 
             optimizer.zero_grad()
             outputs = model(inputs)
 
-            logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+            logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
             loss = criterion(logits, masks)
             loss.backward()
             optimizer.step()
@@ -79,56 +79,56 @@ def validate(
         ) -> Tuple[float, float]:
     
     model.eval()
-    total_loss = 0.0 
+    total_loss = 0.0
 
     dices = []
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Validating"):
             inputs, masks = batch
 
-            if model_name == 'clipseg' :
+            if model_name == "clipseg":
                 inputs[0], masks = inputs[0].to(device), masks[0].to(device)
-                _, N, _, _ = masks.size() # N : Nume of Classes
+                _, N, _, _ = masks.size()  # N: Number of Classes
 
-                for i in range(N) :
-                    bimasks = masks[:,i,:,:].unsqueeze(1)
+                for i in range(N):
+                    bimasks = masks[:, i, :, :].unsqueeze(1)
                     phrases = inputs[i + 1]
 
                     cond = prepare_conditional(model, phrases)
-                    outputs, visual_q, _, _ = model(inputs[0], cond, return_features = True)
+                    outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
 
-                    logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                    logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
 
                     logits_h, logits_w = logits.size(-2), logits.size(-1)
                     labels_h, labels_w = masks.size(-2), masks.size(-1)
 
-                    if logits_h != labels_h or logits_w != labels_w :
+                    if logits_h != labels_h or logits_w != labels_w:
                         logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
 
                     loss = criterion(logits, bimasks)
                     total_loss += loss.item()
 
                     probs = torch.sigmoid(logits)
-                    outputs = (probs > threshold)
+                    outputs = ( probs > threshold )
 
                     dice = metric_fn.calculate(outputs, bimasks).detach().cpu()
                     dices.append(dice)
 
-            else :
+            else:
                 inputs, masks = inputs.to(device), masks.to(device)
                 outputs = model(inputs)
 
-                if isinstance(outputs, tuple) :
+                if isinstance(outputs, tuple):
                     logits, logits1, logits2 = outputs
                     use_multiple_outputs = True
-                else : 
-                    logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                else:
+                    logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
                     use_multiple_outputs = False
 
                 logits_h, logits_w = logits.size(-2), logits.size(-1)
                 labels_h, labels_w = masks.size(-2), masks.size(-1)
 
-                #출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
+                # 출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
                 if logits_h != labels_h or logits_w != labels_w:
                     logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
                     if use_multiple_outputs:
@@ -142,16 +142,13 @@ def validate(
                 total_loss += loss.item()
 
                 probs = torch.sigmoid(logits)
-                # threshold 추가해서 기준 치 이상만 label로 분류 
-                # outputs = (probs > threshold).detach().cpu()
-                # masks = masks.detach().cpu()
-                outputs = (probs > threshold)
+                outputs = probs > threshold
                 dice = metric_fn.calculate(outputs, masks).detach().cpu()
                 dices.append(dice)
 
     epoch_loss = total_loss / len(dataloader)
 
-    if model_name == 'clipseg':
+    if model_name == "clipseg":
         dices = torch.cat(dices, 0)
         avg_dice = torch.mean(dices).item()
     else:
@@ -165,4 +162,3 @@ def validate(
         avg_dice = torch.mean(dices_per_class).item()
     
     return epoch_loss, avg_dice
-
