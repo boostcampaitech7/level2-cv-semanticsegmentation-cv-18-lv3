@@ -13,7 +13,9 @@ from src.models.model_utils import get_model
 from src.datasets.dataloader import get_inference_loaders
 from src.utils.rle_convert import encode_mask_to_rle
 
-def run(config):
+from typing import Any
+
+def run(config: dict[str, Any]) -> None:
     threshold = config['train']['threshold']
     classes = config['classes']
     CLASS2IND = {v: i for i, v in enumerate(classes)}
