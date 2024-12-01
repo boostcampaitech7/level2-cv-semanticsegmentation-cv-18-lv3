@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-def create_project_structure(base_dir="./"):
+def create_project_structure(base_dir: str="./"):
     dirs = [
         f"{base_dir}/src",
         f"{base_dir}/src/utils",
