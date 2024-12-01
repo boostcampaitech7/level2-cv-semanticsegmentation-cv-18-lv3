@@ -28,10 +28,10 @@ def train_one_epoch(
     model.train()
     total_loss = 0
 
-    for batch in tqdm(dataloader, desc="Training"):
+    for batch in tqdm(dataloader, desc='Training'):
         inputs, masks = batch
 
-        if model_name == "clipseg":
+        if model_name == 'clipseg':
             inputs[0], masks = inputs[0].to(device), masks[0].to(device)
             _, N, _, _ = masks.size()  # N: Number of Classes
 
@@ -43,7 +43,7 @@ def train_one_epoch(
                 cond = prepare_conditional(model, phrases)
                 outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
 
-                logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
+                logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
                 loss = criterion(logits, bimasks)
                 loss.backward()
                 optimizer.step()
@@ -56,7 +56,7 @@ def train_one_epoch(
             optimizer.zero_grad()
             outputs = model(inputs)
 
-            logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
+            logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
             loss = criterion(logits, masks)
             loss.backward()
             optimizer.step()
@@ -83,10 +83,10 @@ def validate(
 
     dices = []
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Validating"):
+        for batch in tqdm(dataloader, desc='Validating'):
             inputs, masks = batch
 
-            if model_name == "clipseg":
+            if model_name == 'clipseg':
                 inputs[0], masks = inputs[0].to(device), masks[0].to(device)
                 _, N, _, _ = masks.size()  # N: Number of Classes
 
@@ -97,13 +97,13 @@ def validate(
                     cond = prepare_conditional(model, phrases)
                     outputs, visual_q, _, _ = model(inputs[0], cond, return_features=True)
 
-                    logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
+                    logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
 
                     logits_h, logits_w = logits.size(-2), logits.size(-1)
                     labels_h, labels_w = masks.size(-2), masks.size(-1)
 
                     if logits_h != labels_h or logits_w != labels_w:
-                        logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+                        logits = F.interpolate(logits, size=(labels_h, labels_w), mode='bilinear', align_corners=False)
 
                     loss = criterion(logits, bimasks)
                     total_loss += loss.item()
@@ -122,7 +122,7 @@ def validate(
                     logits, logits1, logits2 = outputs
                     use_multiple_outputs = True
                 else:
-                    logits = outputs["out"] if isinstance(outputs, dict) and "out" in outputs else outputs
+                    logits = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
                     use_multiple_outputs = False
 
                 logits_h, logits_w = logits.size(-2), logits.size(-1)
@@ -130,10 +130,10 @@ def validate(
 
                 # 출력과 레이블의 크기가 다른 경우 출력 텐서를 레이블의 크기로 보간
                 if logits_h != labels_h or logits_w != labels_w:
-                    logits = F.interpolate(logits, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+                    logits = F.interpolate(logits, size=(labels_h, labels_w), mode='bilinear', align_corners=False)
                     if use_multiple_outputs:
-                        logits1 = F.interpolate(logits1, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
-                        logits2 = F.interpolate(logits2, size=(labels_h, labels_w), mode="bilinear", align_corners=False)
+                        logits1 = F.interpolate(logits1, size=(labels_h, labels_w), mode='bilinear', align_corners=False)
+                        logits2 = F.interpolate(logits2, size=(labels_h, labels_w), mode='bilinear', align_corners=False)
 
                 if use_multiple_outputs:
                     loss = criterion((logits, logits1, logits2), masks)
@@ -148,7 +148,7 @@ def validate(
 
     epoch_loss = total_loss / len(dataloader)
 
-    if model_name == "clipseg":
+    if model_name == 'clipseg':
         dices = torch.cat(dices, 0)
         avg_dice = torch.mean(dices).item()
     else:
