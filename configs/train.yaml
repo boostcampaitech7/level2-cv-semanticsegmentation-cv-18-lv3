@@ -1,0 +1,55 @@
+train:
+  num_epochs: 150
+  n_splits: 5
+  threshold: 0.5
+   
+  metric: 
+    name: "dice_coef"
+  # accuracy / f1 / precision / recall / mse / dice_coef
+
+  criterion: 
+    name: "bce"
+  # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice / unet3p
+
+  optimizer:
+    name: "AdamW"
+    # Adam / SGD / AdamW
+    config:
+      weight_decay: 1.e-6
+      # momentum: 0.9
+      lr: 1.e-3
+
+  lr_scheduler:
+    name: "ReduceLROnPlateau"
+    monitor: "metric"
+    config:
+      factor: 0.1
+      patience: 10
+      min_lr: 1.e-6
+      verbose: True
+
+  early_stopping:
+    patience: 20
+    min_delta: 0.001
+    evidence: 'loss'
+    monitor: 'metric'
+
+model:
+  name: "clipseg"
+
+  # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 / clipseg
+
+  # smp : smp_unet / smp_unet++
+  # encoder: resnet34 / resnet101 / efficientnet-b[0-7] / tu-maxvit_tiny_tf512 
+  # ex : smp_unet++_efficientnet-b5
+
+  # 이외 : myUnet / sam2unet_[tiny,base,large]
+
+  config:
+    pretrained: True
+  
+
+webhook : 
+  #vlm slack 채널 webhook 주소로 변경
+  url : "https://hooks.slack.com/services/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"
+  

@@ -1,0 +1,20 @@
+random_seed: 42
+
+device: "cuda"
+# cuda / cpu
+
+developer: "hk"
+
+classes:  [
+    'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+    'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
+    'finger-11', 'finger-12', 'finger-13', 'finger-14', 'finger-15',
+    'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
+    'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
+    'Triquetrum', 'Pisiform', 'Radius', 'Ulna' ]
+
+# wandb 사용을 원치 않으신다면 아래 wandb 부분을 다 주석 처리해주세요.
+wandb:
+  user_name: "hyeonrl98" #본인 id 적기
+  team_name: "dkvltmxhf-hotclip" # wandb 프로젝트 명, 변경 x
+  experiment: "clipseg_dev" # 무슨 실험인지
