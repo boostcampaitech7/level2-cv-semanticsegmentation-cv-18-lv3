@@ -12,6 +12,7 @@ import numpy as np
 from src.models.model_utils import get_model
 from src.datasets.dataloader import get_inference_loaders
 from src.utils.rle_convert import encode_mask_to_rle
+from src.models.CLIPSeg import prepare_conditional
 
 from typing import Any
 
@@ -42,15 +43,38 @@ def run(config: dict[str, Any]) -> None:
     filename_and_class = []
     with torch.no_grad():
         for step, (images, image_names) in tqdm(enumerate(test_loader), total=len(test_loader)):
-            images = images.to(device)
 
-            outputs = model(images)
-            if isinstance(outputs, tuple) :
-                outputs, *_ = outputs
-            outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
-            outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear")
-            outputs = torch.sigmoid(outputs)
-            outputs = (outputs > threshold).detach().cpu().numpy()
+            if model_name == 'clipseg' :
+                images[0] = images[0].to(device)
+                N = 29
+                outputs_list = []
+                for i in range(N):
+                    print(images[i+1])
+                    
+                for i in range(N):
+                    phrases = images[i+1]
+
+                    cond = prepare_conditional(phrases)
+                    outputs, visual_q, _, _ = model(images[0], cond, return_features=True)
+
+                    outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                    outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear", align_corners=False)
+                    outputs = torch.sigmoid(outputs)
+                    outputs = (outputs > threshold).detach().cpu().numpy()  # [batch_size, 1, H, W]
+                    outputs_list.append(outputs)
+
+                outputs = np.concatenate(outputs_list, axis=1)  # [batch_size, num_classes, H, W]
+
+            else:
+                images = images.to(device)
+                outputs = model(images)
+
+                if isinstance(outputs, tuple) :
+                    outputs, *_ = outputs
+                outputs = outputs['out'] if isinstance(outputs, dict) and 'out' in outputs else outputs
+                outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear")
+                outputs = torch.sigmoid(outputs)
+                outputs = (outputs > threshold).detach().cpu().numpy()
 
             for output, image_name in zip(outputs, image_names):
                 for c, segm in enumerate(output):
