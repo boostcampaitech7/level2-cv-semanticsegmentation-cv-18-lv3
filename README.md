@@ -96,5 +96,9 @@ pip install -r requirements.txt
 # 4. Run
 ## Train
 ```
+python main.py --mode train --configs_folder ./configs
 ```
 ## Inference
+```
+python main.py --mode inference --configs_folder ./outputs/{your_folder}
+```
