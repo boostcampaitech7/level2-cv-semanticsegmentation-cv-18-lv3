@@ -1,5 +1,6 @@
 # 🔗 HotCLIP
-![KakaoTalk_Photo_2024-12-02-11-53-53](https://github.com/user-attachments/assets/8eaeb967-964b-4dca-a270-38d8a9320f19)
+[![KakaoTalk_Photo_2024-12-02-11-53-53](https://github.com/user-attachments/assets/8eaeb967-964b-4dca-a270-38d8a9320f19)](https://www.figma.com/slides/8ZYqtHBSqWMH74LwsAUE3x/HotCLIP?node-id=99-130&node-type=slide&t=hBJEKTEx6FR29qOe-0)
+
 
 ## 🤜 팀의 목표
 - 협업 능력을 기르자!
