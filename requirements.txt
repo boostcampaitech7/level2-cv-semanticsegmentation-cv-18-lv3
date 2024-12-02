@@ -8,3 +8,10 @@ timm
 transformers
 torch
 optuna
+
+# for sam2unet
+hydra-core==1.3.2
+pysodmetrics
+wget
+
+requests

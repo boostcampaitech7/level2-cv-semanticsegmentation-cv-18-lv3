@@ -19,10 +19,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch import Tensor
 from torch.utils.data import Dataset, DataLoader
 from torchvision import models
 
 from src.utils.augmentation import get_transform
+
+from typing import Union
 
 CLASSES = [
     'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
@@ -57,6 +60,9 @@ class XRayDataset(Dataset):
             
             _filenames = np.array(pngs)
             _labelnames = np.array(jsons)
+            
+            self.filenames = _filenames
+            self.labelnames = _labelnames
             
             # split train-valid
             # 한 폴더 안에 한 인물의 양손에 대한 `.dcm` 파일이 존재하기 때문에
@@ -100,10 +106,10 @@ class XRayDataset(Dataset):
         self.transforms = transforms
         self.mode = mode
     
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.filenames)
     
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> Union[tuple[Tensor, Tensor], tuple[Tensor, str]]:
         image_name = self.filenames[item]
         image_path = os.path.join(self.image_root, image_name)
         
@@ -169,7 +175,7 @@ class XRayDataset(Dataset):
                 
             return image, image_name
     
-    def get_pngs(self):
+    def get_pngs(self) -> set[str]:
         return {
             os.path.relpath(os.path.join(root, fname), start=self.image_root)
             for root, _dirs, files in os.walk(self.image_root)
@@ -177,13 +183,19 @@ class XRayDataset(Dataset):
             if os.path.splitext(fname)[1].lower() == ".png"
         }
         
-    def get_jsons(self):
+    def get_jsons(self) -> set[str]:
         return {
             os.path.relpath(os.path.join(root, fname), start=self.label_root)
             for root, _dirs, files in os.walk(self.label_root)
             for fname in files
             if os.path.splitext(fname)[1].lower() == ".json"
         }
+        
+    def get_filepath(self, idx: int) -> tuple[str, str]:
+        return self.filenames[idx], self.labelnames[idx]
+    
+    def get_all_path(self) -> tuple[list, list]:
+        return self.filenames, self.labelnames
             
 if __name__ == "__main__":
 

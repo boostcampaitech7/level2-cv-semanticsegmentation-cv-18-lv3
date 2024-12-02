@@ -1,6 +1,5 @@
 train:
-  batch_size: 4
-  num_epochs: 10
+  num_epochs: 150
   n_splits: 5
   threshold: 0.5
    
@@ -8,41 +7,49 @@ train:
     name: "dice_coef"
   # accuracy / f1 / precision / recall / mse / dice_coef
 
-  # 이미 학습한 모델의 ckpt를 가지고 재학습 할 것인지 
-  resume: False
-  #어떤 ckpt로부터 재학습할 것인지
-  ckpt_path : ""
-
   criterion: 
-    name: "bce+dice"
-  # CrossEntropyLoss / BCEWithLogitsLoss / bce+dice
+    name: "bce"
+  # CrossEntropy / bce / bce+dice / dice / StructureLoss(for SAM2-UNET) / focal+dice / unet3p
 
   optimizer:
-    name: "Adam"
-    # Adam / SGD
+    name: "AdamW"
+    # Adam / SGD / AdamW
     config:
       weight_decay: 1.e-6
       # momentum: 0.9
-      lr: 1.e-4
+      lr: 1.e-3
 
   lr_scheduler:
     name: "ReduceLROnPlateau"
     monitor: "metric"
     config:
       factor: 0.1
-      patience: 20
+      patience: 10
       min_lr: 1.e-6
       verbose: True
 
   early_stopping:
-    patience: 5
+    patience: 20
     min_delta: 0.001
     evidence: 'loss'
     monitor: 'metric'
 
 model:
-  name: "fcn_50"
-  # fcn_50 /
+  name: "clipseg"
+
+  # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 / clipseg
+
+  # smp : smp_unet / smp_unet++
+  # encoder: resnet34 / resnet101 / efficientnet-b[0-7] / tu-maxvit_tiny_tf512 
+  # ex : smp_unet++_efficientnet-b5
+
+  # 이외 : myUnet / sam2unet_[tiny,base,large]
+
   config:
     pretrained: True
+  
+
+webhook : 
+  #vlm slack 채널 webhook 주소로 변경
+  url : "https://hooks.slack.com/services/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"
   

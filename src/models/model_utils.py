@@ -1,33 +1,29 @@
-import timm
+import os
+import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.optim as optim
 from torchvision import models
 from typing import Any, Dict, Optional
 import segmentation_models_pytorch as smp
-import torch.nn.functional as F
 
+from .unet import UNetResNet34 
+from .SAM2UNet import get_sam2unet
+from .smp_utils import get_smp_model
+from .deeplabv3 import DeepLabV3
+from .CLIPSeg import get_clipseg
 
-def calc_loss_bce_dice(pred, target, bce_weight=0.5):
-    bce = F.binary_cross_entropy_with_logits(pred, target)
-    pred = F.sigmoid(pred)
-    dice = dice_loss(pred, target)
-    loss = bce * bce_weight + dice * (1 - bce_weight)
-    return loss
-
-def dice_loss(pred, target, smooth = 1.):
-    pred = pred.contiguous()
-    target = target.contiguous()   
-    intersection = (pred * target).sum(dim=2).sum(dim=2)
-    loss = (1 - ((2. * intersection + smooth) / (pred.sum(dim=2).sum(dim=2) +   target.sum(dim=2).sum(dim=2) + smooth)))
-    return loss.mean()
-    
+from ..utils.loss import *
 
 def get_criterion(criterion_name: str) -> nn.Module:
     criterions = {
-        'CrossEntropyLoss': nn.CrossEntropyLoss(),
-        'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(),
-        'bce+dice': calc_loss_bce_dice
+        'CrossEntropy': cross_entropy_loss,
+        'bce': bce_loss,
+        'bce+dice': calc_loss_bce_dice,
+        'dice': dice_loss,
+        'StructureLoss': multiscale_structure_loss,
+        'focal+dice': focal_dice_loss,
+        'unet3p': unet3p_loss
     }
     if criterion_name in criterions:
         return criterions[criterion_name]
@@ -43,6 +39,8 @@ def get_optimizer(optimizer_config : Dict[str, Any], parameters) -> optim.Optimi
     elif optimizer_name == 'SGD':
         # lr, momentum, weight_decay
         optimizer = optim.SGD(parameters, **optimizer_config['config'])
+    elif optimizer_name == 'AdamW':
+        optimizer = optim.AdamW(parameters, **optimizer_config['config'])
     else:
         raise ValueError(f"Unknown optimizer: {optimizer_name}")
 
@@ -68,34 +66,37 @@ def get_lr_scheduler(optimizer: optim.Optimizer, scheduler_config: Dict[str, Any
     return scheduler
 
 # timm 라이브러리에서 모델 불러오기
-def get_model(model_config: Dict[str, Any], classes) -> nn.Module:
-    model_name = model_config['name']
+def get_model(model_name: str, classes) -> nn.Module:
     num_classes = len(classes)
 
-    if model_name == 'fcn_50':
-        model = models.segmentation.fcn_resnet50(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
-    elif model_name == 'fcn_101':
-        model = models.segmentation.fcn_resnet101(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=1)
-    elif model_name == 'deeplabv3_50':
-        model = models.segmentation.deeplabv3_resnet50(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)        
-    elif model_name == 'deeplabv3_101':
-        model = models.segmentation.deeplabv3_resnet101(**model_config['config'])
-        model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
-    elif 'smp_' in model_name:
-        model_name = model_name.split('_')[1]
-        
-        if model_name == 'unet':
-            model = smp.Unet('resnet34', encoder_weights="imagenet", classes=num_classes)
-            
-        else:
-            raise ValueError(f"Unknown model: {model_name}")
-    else:
-        raise ValueError(f"Unkown model: {model_name}")
+    torchvision_models = {
+        "fcn_50": lambda: models.segmentation.fcn_resnet50(pre_trained=True),
+        "fcn_101": lambda: models.segmentation.fcn_resnet101(pre_trained=True),
+        "deeplabv3_50": lambda: models.segmentation.deeplabv3_resnet50(pre_trained=True),
+        "deeplabv3_101": lambda: models.segmentation.deeplabv3_resnet101(pre_trained=True),
+    }
 
-    # 매핑된 모델 이름 가져오기, 없으면 원래 이름 사용
-    # model_name = model_mapping.get(model_config_name, model_config_name)
+    if model_name in torchvision_models:
+        model = torchvision_models[model_name]()
+        last_channels = 512 if "fcn" in model_name else 256
+        model.classifier[4] = nn.Conv2d(last_channels, num_classes, kernel_size=1)
+        
+    elif 'smp_' in model_name:
+        model = get_smp_model(model_name, num_classes)
+
+    elif model_name == "myUnet":
+        model = UNetResNet34()
+    
+    elif 'sam2unet_' in model_name:
+        model = get_sam2unet(model_name)  
+
+    elif model_name == "clipseg" :
+        model = get_clipseg()
+
+    elif model_name == "deeplabv3_101_scratch":
+        model = DeepLabV3(in_channels=3, num_classes=29)
+
+    else:
+        raise ValueError(f"Unknown model: {model_name}")
 
     return model
