@@ -38,6 +38,7 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 
 # 3. Quick Start
 ```
+pip install -r requirements.txt
 ```
 <br>
 <br>
@@ -94,5 +95,6 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 
 # 4. Run
 ## Train
-
+```
+```
 ## Inference
