@@ -37,7 +37,7 @@ train:
 model:
   name: "clipseg"
 
-  # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 
+  # torchvision : fcn_50 / fcn_101 / deeplabv3_50 / deeplabv3_101 / clipseg
 
   # smp : smp_unet / smp_unet++
   # encoder: resnet34 / resnet101 / efficientnet-b[0-7] / tu-maxvit_tiny_tf512 

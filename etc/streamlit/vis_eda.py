@@ -108,7 +108,7 @@ class VisualizeImageAndAnnotation():
         self.curr_sort = "None"
         
     @staticmethod
-    def load_pngs(image_root: str) -> set:
+    def load_pngs(image_root: str) -> set[str]:
         return {
             os.path.relpath(os.path.join(root, fname), start=image_root)
             for root, _dirs, files in os.walk(image_root)
@@ -117,7 +117,7 @@ class VisualizeImageAndAnnotation():
         }
     
     @staticmethod
-    def load_jsons(label_root: str) -> set:
+    def load_jsons(label_root: str) -> set[str]:
         return {
             os.path.relpath(os.path.join(root, fname), start=label_root)
             for root, _dirs, files in os.walk(label_root)
@@ -144,22 +144,19 @@ class VisualizeImageAndAnnotation():
             self.dice_csv = pd.read_csv(os.path.join(self.vis_path, "dice.csv"))
             self.dice_csv['avg_dice'] = self.dice_csv.loc[:, self.dice_csv.columns != 'file_path'].mean(axis=1)
             
-    def get_train_count(self):
+    def get_train_count(self) -> int:
         return len(self.jsons)
     
-    def get_test_count(self):
+    def get_test_count(self) -> int:
         return len(self.tests)
     
-    def get_json_info(self, json_path):
-        pass
-    
-    def plot_base_img(self, idx: int):
+    def plot_base_img(self, idx: int) -> None:
         img_path = os.path.join(self.img_root, self.pngs[idx])
         image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
         
         st.image(image, caption=f"{self.pngs[idx]}")
     
-    def plot_train_annotation(self, idx: int): 
+    def plot_train_annotation(self, idx: int) -> None: 
         image, label = self.xraydataset[idx]
         
         image = (image * 255).astype(np.uint8)
@@ -256,7 +253,7 @@ class VisualizeImageAndAnnotation():
         blended = Image.fromarray(blended)
         st.image(blended, caption=f"{self.tests[idx]}")
 
-    def label2rgb(self, label):
+    def label2rgb(self, label: np.ndarray) -> np.ndarray:
         image_size = label.shape[1:] + (3, )
         image = np.zeros(image_size, dtype=np.uint8)
         
@@ -292,10 +289,10 @@ class XRayDataset(Dataset):
 
         self.transforms = transforms
     
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.filenames)
     
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> tuple[np.ndarray, np.ndarray]:
         image_name = self.filenames[item]
         image_path = os.path.join(self.img_root, image_name)
         

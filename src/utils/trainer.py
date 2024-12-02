@@ -24,6 +24,7 @@ def train_one_epoch(
                 device: torch.device,
                 model_name: str,
             ) -> Tuple[float, float]:
+
     
     model.train()
     total_loss = 0

@@ -1,21 +1,22 @@
 import torch.nn.functional as F
 import torch
+from torch import Tensor
 
-def calc_loss_bce_dice(pred=None, target=None, bce_weight=0.5):
+def calc_loss_bce_dice(pred: Tensor=None, target: Tensor=None, bce_weight: float=0.5) -> Tensor:
     bce = F.binary_cross_entropy_with_logits(pred, target)
     pred = F.sigmoid(pred)
     dice = dice_loss(pred, target)
     loss = bce * bce_weight + dice * (1 - bce_weight)
     return loss
 
-def dice_loss(pred=None, target=None, smooth = 1.):
+def dice_loss(pred: Tensor=None, target: Tensor=None, smooth: float=1.) -> Tensor:
     pred = pred.contiguous()
     target = target.contiguous()   
     intersection = (pred * target).sum(dim=2).sum(dim=2)
     loss = (1 - ((2. * intersection + smooth) / (pred.sum(dim=2).sum(dim=2) +   target.sum(dim=2).sum(dim=2) + smooth)))
     return loss.mean()
 
-def focal_loss(pred=None, target=None, alpha=0.25, gamma=2.0):
+def focal_loss(pred: Tensor=None, target: Tensor=None, alpha: float=0.25, gamma: float=2.0) -> Tensor:
     """Focal Loss: L_fl = -(1 - p_t)^γ * log(p_t)"""
     pred_prob = torch.sigmoid(pred)
     pt = pred_prob * target + (1 - pred_prob) * (1 - target)
@@ -24,14 +25,14 @@ def focal_loss(pred=None, target=None, alpha=0.25, gamma=2.0):
     return loss.mean()
 
 
-def focal_dice_loss(pred=None, target=None, focal_weight = 0.5):
+def focal_dice_loss(pred: Tensor=None, target: Tensor=None, focal_weight: float=0.5) -> Tensor:
     focal = focal_loss(pred, target)
     pred = F.sigmoid(pred)
     dice = dice_loss(pred, target)
     loss = focal * focal_weight + dice * (1 - focal_weight)
     return loss
     
-def structure_loss(pred=None, target=None):
+def structure_loss(pred: Tensor=None, target: Tensor=None) -> Tensor:
     weit = 1 + 5 * torch.abs(F.avg_pool2d(target, kernel_size=31, stride=1, padding=15) - target)
     wbce = F.binary_cross_entropy_with_logits(pred, target, reduction='none')
     wbce = (weit * wbce).sum(dim=(2, 3)) / weit.sum(dim=(2, 3))
@@ -41,7 +42,7 @@ def structure_loss(pred=None, target=None):
     wiou = 1 - (inter + 1) / (union - inter + 1)
     return (wbce + wiou).mean()
 
-def multiscale_structure_loss(pred=None, target=None):
+def multiscale_structure_loss(pred: Tensor=None, target: Tensor=None) -> Tensor:
     loss = 0
     pred0, pred1, pred2 = pred
     loss0 = structure_loss(pred0, target)
@@ -50,13 +51,13 @@ def multiscale_structure_loss(pred=None, target=None):
     loss = loss0 + loss1 + loss2
     return loss
 
-def cross_entropy_loss(pred=None, target=None):
+def cross_entropy_loss(pred: Tensor=None, target: Tensor=None) -> Tensor:
     return F.cross_entropy(pred, target)
 
-def bce_loss(pred=None, target=None):
+def bce_loss(pred: Tensor=None, target: Tensor=None) -> Tensor:
     return F.binary_cross_entropy_with_logits(pred, target)
 
-def ms_ssim_loss(pred=None, target=None, C1=0.01**2, C2=0.03**2):
+def ms_ssim_loss(pred: Tensor=None, target: Tensor=None, C1: float=0.01**2, C2: float=0.03**2) -> Tensor:
         """수식을 못 쓰겟음"""
         pred = torch.sigmoid(pred)
         
@@ -73,7 +74,7 @@ def ms_ssim_loss(pred=None, target=None, C1=0.01**2, C2=0.03**2):
         
         return 1 - ssim.mean()
 
-def iou_loss(pred=None, target=None, smooth=1.):
+def iou_loss(pred: Tensor=None, target: Tensor=None, smooth: float=1.) -> Tensor:
     """dice랑 비슷하지만 분모가 합이냐 합집합이냐 차이정도 있음"""
     pred = pred.contiguous()
     target = target.contiguous()
@@ -85,7 +86,7 @@ def iou_loss(pred=None, target=None, smooth=1.):
     loss = 1 - iou
     return loss.mean()
 
-def unet3p_loss(pred, target, gamma=2.0, beta=1.0, C1=0.01**2, C2=0.03**2):
+def unet3p_loss(pred: Tensor=None, target: Tensor=None, gamma: float=2.0, beta: float=1.0, C1: float=0.01**2, C2: float=0.03**2) -> Tensor:
     """Total Segmentation Loss: L_seg = L_fl + L_ms-ssim + L_iou"""
     l_fl = focal_loss(pred, target, gamma)
     l_ms_ssim = ms_ssim_loss(pred, target, beta, C1, C2)

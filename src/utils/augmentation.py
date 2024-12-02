@@ -4,6 +4,8 @@ from albumentations import (
 )
 import albumentations as A
 
+from typing import Any
+
 aug_list = {
     'resize' : Resize,
     'normalize': Normalize,
@@ -15,7 +17,7 @@ aug_list = {
     'contrast' : RandomBrightnessContrast
 }
 
-def get_transform(aug_config, is_train=True):
+def get_transform(aug_config: dict[str, Any], is_train: bool=True) -> Compose:
     aug_ops = []
 
     if is_train:
@@ -28,6 +30,6 @@ def get_transform(aug_config, is_train=True):
 
     return Compose(aug_ops)
 
-def load_config(config_path):
+def load_config(config_path: str) -> None:
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
