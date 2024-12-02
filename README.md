@@ -1,3 +1,11 @@
+# 1. Project Overview (프로젝트 개요)
+- Hand Bone Segmentation
+
+# 2. Team Members (팀원 및 팀 소개)
+
+# 3. Quick Start
+```
+```
 
 ### 프로젝트 구조
 ```plaintext
@@ -46,3 +54,8 @@
  ┃   ┗ 📜trainer.py
  ┗ 📂wandb
 ```
+
+# 4. Run
+## Train
+
+## Inference
