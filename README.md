@@ -89,6 +89,7 @@ pip install -r requirements.txt
  ┗ 📂wandb
 ```
 <br>
+<br>
 
 # 4. Run 🏃🏻
 ## Train
@@ -99,6 +100,8 @@ python main.py --mode train --configs_folder ./configs
 ```
 python main.py --mode inference --configs_folder ./outputs/{your_folder}
 ```
+<br>
+<br>
 
 # 5. Reference 📎
 **[1] SAM** https://arxiv.org/abs/2304.02643
