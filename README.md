@@ -2,18 +2,18 @@
 [![KakaoTalk_Photo_2024-12-02-11-53-53](https://github.com/user-attachments/assets/8eaeb967-964b-4dca-a270-38d8a9320f19)](https://www.figma.com/slides/8ZYqtHBSqWMH74LwsAUE3x/HotCLIP?node-id=99-130&node-type=slide&t=hBJEKTEx6FR29qOe-0)
 
 
-## 🤜 팀의 목표
-- 협업 능력을 기르자!
-- 지속 가능한 Baseline Code를 구축하자! (feat. 모델 이식)
-- 이번 대회에 Vision Language Model을 활용해보자!
+# 0. 팀의 목표 🤗
+**- 협업 능력을 기르자!**
+
+**- 지속 가능한 Baseline Code를 구축하자! (feat. 모델 이식)**
+
+**- 이번 대회에 Vision Language Model을 활용해보자!**
 
 <br>
 
-# 1. Project Overview (프로젝트 개요)
+# 1. Project Overview (프로젝트 개요) 🌟
 - Hand Bone Segmentation
-뼈는 우리 몸의 구조와 기능에 중요한 영향을 미치기 때문에, 정확한 뼈 분할은 의료 진단 및 치료 계획을 개발하는 데 필수적입니다.
-
-Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하나로, 특히, 딥러닝 기술을 이용한 뼈 Segmentation은 많은 연구가 이루어지고 있으며, 다양한 목적으로 도움을 줄 수 있습니다.
+뼈는 우리 몸의 구조와 기능에 중요한 영향을 미치기 때문에, 정확한 뼈 분할은 의료 진단 및 치료 계획을 개발하는 데 필수적입니다. Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하나로, 특히, 딥러닝 기술을 이용한 뼈 Segmentation은 많은 연구가 이루어지고 있으며, 다양한 목적으로 도움을 줄 수 있습니다.
 
 1. 질병 진단의 목적으로 뼈의 형태나 위치가 변형되거나 부러지거나 골절 등이 있을 경우, 그 부위에서 발생하는 문제를 정확하게 파악하여 적절한 치료를 시행할 수 있습니다.
 
@@ -26,7 +26,7 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 <br>
 <br>
 
-# 2. Team Members (팀원 및 팀 소개)
+# 2. Team Members (팀원 및 팀 소개) 👨🏻‍💻👩🏻‍💻
 
 |                         곽기훈                         |                            김민지                            |                         김현기                         |                         이해강                         |                          장희진                          |                        홍유향                        |
 |:------------------------------------------------------:|:------------------------------------------------------------:|:------------------------------------------------------:|:--------------------------------------------------------:|:----------------------------------------------------:|:----------------------------------------------------:|
@@ -37,14 +37,11 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 <br>
 
 
-# 3. Quick Start
+# 3. Quick Start 🧰
 ```
 pip install -r requirements.txt
 ```
-<br>
-<br>
-
-### 프로젝트 구조
+### 프로젝트 구조 🗂️
 ```plaintext
 📦level2-cv-semanticsegmentation
  ┣ 📜main.py
@@ -92,9 +89,8 @@ pip install -r requirements.txt
  ┗ 📂wandb
 ```
 <br>
-<br>
 
-# 4. Run
+# 4. Run 🏃🏻
 ## Train
 ```
 python main.py --mode train --configs_folder ./configs
@@ -103,3 +99,12 @@ python main.py --mode train --configs_folder ./configs
 ```
 python main.py --mode inference --configs_folder ./outputs/{your_folder}
 ```
+
+# 5. Reference 📎
+**[1] SAM** https://arxiv.org/abs/2304.02643
+
+**[2] SAM2-UNet** https://arxiv.org/abs/2408.08870
+
+**[3] BEiT3** https://arxiv.org/abs/2208.10442
+
+**[4] CLIPSeg** https://arxiv.org/abs/2112.10003 
